@@ -3,4 +3,4 @@ Repository for DrawIt, members are Erki Toomemägi, Anton Otrokov, Mark Riispapp
 
 
 ## Figma Design  
-soon™
+soon™™
