@@ -1,5 +1,5 @@
 # DrawIt
-Repository for DrawIt, members are Erki Toomemägi, Anton Otrokov, Mark Riispapp
+Repository for DrawIt, members are Erki Toomemägi, Anton Otrokov, Mark Riispapp, Romet Vislapuu
 
 
 ## Figma Design  
