@@ -5,11 +5,11 @@ Repository for DrawIt, members are Erki Toomemägi, Anton Otrokov, Mark Riispapp
 ## Description
 Community drawing app inspired by BeReal. Every day there is a random theme, where you have 10 minutes to draw based on the theme. Also an option to draw whatever you want.
 Features are:
-  Simple and effective drawing - paint, erase, fill, color picker and layers.
-  Interactive effects - Bring your drawing to life with real time effects, manipulate layers with gyroscope.
-  Daily Theme - Each day a new theme to work on.
-  Community feed - See all sorts of drawings made by other artists.
-  Friend feed - See what your friends have drawn.
+1.  Simple and effective drawing - paint, erase, fill, color picker and layers.
+2.  Interactive effects - Bring your drawing to life with real time effects, manipulate layers with gyroscope.
+3.  Daily Theme - Each day a new theme to work on.
+4.  Community feed - See all sorts of drawings made by other artists.
+5.  Friend feed - See what your friends have drawn.
   
 
 
