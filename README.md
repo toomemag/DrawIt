@@ -1,5 +1,7 @@
 # DrawIt
-Repository for DrawIt, members are Erki Toomemägi, Anton Otrokov, Mark Riispapp, Romet Vislapuu
+Repository for DrawIt
+Members:
+Erki Toomemägi (toomemag), Anton Otrokov (Anton Otrokov), Mark Riispapp (Mark Riispapp), Romet Vislapuu
 
 
 ## Description
