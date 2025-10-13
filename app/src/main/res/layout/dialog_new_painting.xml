@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@drawable/dialog_bg">
+<!-- ^ "material" used for rounded edges -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/NewPainting_DailyTheme"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/drawn"
+        android:text="Daily Theme"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textSize="34sp"
+        app:backgroundTint="#3060d7" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/NewPainting_FreeMode"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:backgroundTint="#6786d2"
+        android:fontFamily="@font/drawn"
+        android:text="Freemode"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textSize="34sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/NewPainting_Cancel"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/drawn"
+        android:text="Cancel"
+        android:textAppearance="?attr/textAppearanceCaption"
+        android:textSize="34sp"
+        app:backgroundTint="#ABABAB" />
+</LinearLayout>
+
