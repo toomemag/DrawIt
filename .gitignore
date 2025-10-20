@@ -15,5 +15,5 @@
 .externalNativeBuild
 .cxx
 local.properties
-gradle
+gradle/wrapper
 *.log
