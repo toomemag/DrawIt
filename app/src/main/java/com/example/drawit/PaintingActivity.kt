@@ -1,11 +1,6 @@
 package com.example.drawit
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Rect
 import android.os.Bundle
-import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -20,89 +15,11 @@ import com.example.drawit.databinding.ActivityPaintingBinding
 import com.example.drawit.databinding.DialogPausePaintingBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.hypot
-import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
+import com.example.drawit.painting.CanvasManager
 import kotlin.math.abs
 import kotlin.math.max
-
-data class Layer(
-    // debug names more than anything
-    val name: String = "Layer",
-    var bitmap: Bitmap = createBitmap(128, 128),
-    // cant access canvasmanager from activity view
-    var isActive: Boolean = true
-)
-
-class CanvasManager {
-    private val layers = mutableListOf<Layer>()
-
-    init {
-        layers.add(Layer(name = "Layer1"))
-    }
-
-    fun setActiveLayer(index: Int) {
-        if (index == -1) {
-            // disable all layers
-            for (layer in layers) layer.isActive = false
-        } else {
-            for (i in layers.indices) {
-                layers[i].isActive = (i == index)
-            }
-        }
-    }
-
-    fun getActiveLayerIndex(): Int {
-        for (layerIdx in layers.indices) {
-            if (layers[layerIdx].isActive) {
-                return layerIdx
-            }
-        }
-        return -1
-    }
-
-    fun getLayers(): List<Layer> = layers.toList()
-
-    fun addLayer(layer: Layer) {
-        layers.add(layer)
-    }
-
-    fun removeLayer(layer: Layer) {
-        layers.remove(layer)
-    }
-
-    fun getLayer(index: Int): Layer? = layers.getOrNull(index)
-}
-
-
-class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
-    var layers: List<Layer> = emptyList()
-    var paint = android.graphics.Paint().apply {
-        // blurry otherwise
-        isAntiAlias = false
-        isFilterBitmap = false
-    }
-    private val bitmapScaleRect = Rect()
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-
-        // scale bitmap to fill the view size
-        bitmapScaleRect.set(0, 0, width, height)
-
-        // draw all layers
-        for (i in layers.indices) {
-            val layer = layers[i]
-
-            paint.alpha = if (layer.isActive) 255 else 55
-            canvas.drawBitmap(layer.bitmap, null, bitmapScaleRect, paint)
-        }
-    }
-
-    fun invalidateLayers() {
-        invalidate()
-    }
-}
-
+import com.example.drawit.painting.CanvasView
 
 class PaintingActivity : AppCompatActivity() {
     // binding for activity_painting.xml
@@ -179,6 +96,8 @@ class PaintingActivity : AppCompatActivity() {
             dialogBinding.ActivePaintingSaveExit.setOnClickListener {
                 // close activity
                 // todo: save painting
+                //       could implement a serializer in CanvasManager and store it locally
+                //       would be overriden when a new painting is saved and one exists
                 finish()
                 dialog.dismiss()
             }
@@ -188,10 +107,7 @@ class PaintingActivity : AppCompatActivity() {
         }
 
         findViewById<TextView>(R.id.newLayer).setOnClickListener {
-            val newLayer = Layer(name = "Layer${canvasManager.getLayers().size + 1}")
-            canvasManager.addLayer(newLayer)
-            // set created layer as active (felt a bit more intuitive rather than clicking new and then selecting the layer)
-            canvasManager.setActiveLayer(canvasManager.getLayers().size - 1)
+            canvasManager.newLayerAction("Layer${canvasManager.getLayers().size + 1}")
 
             // refresh layer list
             syncLayersToView()
@@ -201,7 +117,6 @@ class PaintingActivity : AppCompatActivity() {
         updateCanvasLayers()
 
         // canvas paint callback
-        // todo: fix "Custom view `CanvasView` has setOnTouchListener called on it but does not override performClick"
         binding.canvas.setOnTouchListener { v, event ->
             // todo: >1 finger gesture crashes app, could be from here or from view event listener
             when (event.actionMasked) {

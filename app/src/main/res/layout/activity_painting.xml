@@ -170,13 +170,13 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <com.example.drawit.CanvasView
+            <com.example.drawit.painting.CanvasView
                 android:id="@+id/canvas"
                 android:layout_width="380dp"
                 android:layout_height="380dp"
                 android:layout_gravity="center"
                 android:background="@drawable/dashed_border">
-            </com.example.drawit.CanvasView>
+            </com.example.drawit.painting.CanvasView>
         </FrameLayout>
 
         <androidx.constraintlayout.widget.Guideline
