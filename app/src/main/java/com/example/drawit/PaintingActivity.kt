@@ -1,9 +1,16 @@
 package com.example.drawit
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Bundle
+import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -11,10 +18,95 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.drawit.databinding.ActivityPaintingBinding
 import com.example.drawit.databinding.DialogPausePaintingBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlin.math.hypot
+import androidx.core.graphics.createBitmap
+
+data class Layer(
+    // debug names more than anything
+    val name: String = "Layer",
+    var bitmap: Bitmap = createBitmap(128, 128),
+    // cant access canvasmanager from activity view
+    var isActive: Boolean = true
+)
+
+class CanvasManager {
+    private val layers = mutableListOf<Layer>()
+
+    init {
+        // Add placeholder layers
+        layers.add(Layer(name = "Layer1"))
+    }
+
+    fun setActiveLayer(index: Int) {
+        if (index == -1) {
+            // disable all layers
+            for (layer in layers) layer.isActive = false
+        } else {
+            for (i in layers.indices) {
+                layers[i].isActive = (i == index)
+            }
+        }
+    }
+
+    fun getActiveLayerIndex(): Int {
+        for (layerIdx in layers.indices) {
+            if (layers[layerIdx].isActive) {
+                return layerIdx
+            }
+        }
+        return -1
+    };
+
+    fun getLayers(): List<Layer> = layers.toList()
+
+    fun addLayer(layer: Layer) {
+        layers.add(layer)
+    }
+
+    fun removeLayer(layer: Layer) {
+        layers.remove(layer)
+    }
+
+    fun getLayer(index: Int): Layer? = layers.getOrNull(index)
+}
+
+
+class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
+    var layers: List<Layer> = emptyList()
+    var paint = android.graphics.Paint()
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        // Draw all visible layers
+        for (i in layers.indices) {
+            val layer = layers[i]
+
+            if (layer.isActive)
+                paint.alpha = 255
+            else paint.alpha = 55
+
+            canvas.drawBitmap(layer.bitmap, 0f, 0f, paint)
+        }
+    }
+
+    fun invalidateLayers() {
+        invalidate()
+    }
+}
+
 
 class PaintingActivity : AppCompatActivity() {
     // binding for activity_painting.xml
-    private lateinit var binding: ActivityPaintingBinding
+    private lateinit var binding: ActivityPaintingBinding;
+    // whole canvas manager
+    // handles all drawing related actions
+    private val canvasManager = CanvasManager()
+
+    // touch handling vars
+    private var lastTouchMidPoint: Array<Float> = arrayOf(0f, 0f)
+    private var firstTouchDistance: Float = 0f
+    private var canvasOffset: Array<Float> = arrayOf(0f, 0f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +172,115 @@ class PaintingActivity : AppCompatActivity() {
             dialog.show()
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         }
+
+        findViewById<TextView>(R.id.newLayer).setOnClickListener {
+            val newLayer = Layer(name = "Layer${canvasManager.getLayers().size + 1}")
+            canvasManager.addLayer(newLayer)
+
+            // refresh layer list
+            syncLayersToView( )
+        }
+
+        syncLayersToView( );
+        updateCanvasLayers( )
+    }
+
+    private fun syncLayersToView( ) {
+        binding.layersContainer.removeViews(0, binding.layersContainer.childCount - 1)
+
+        for (layer in canvasManager.getLayers()) {
+            val layerView = TextView(this).apply {
+                text = layer.name
+                textSize = 18f
+                setPadding(20, 20, 20, 20)
+                setBackgroundColor( 0x22000000 )
+                layoutParams = ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                setOnClickListener {
+                    val index = canvasManager.getLayers().indexOf(layer)
+                    val activeIndex = canvasManager.getActiveLayerIndex()
+                    if (index != -1) {
+                        if (index != activeIndex)
+                            canvasManager.setActiveLayer(index)
+                        else canvasManager.setActiveLayer(-1);
+                    }
+                }
+            }
+
+            // before "+" layer
+            binding.layersContainer.addView(layerView, binding.layersContainer.childCount - 1)
+        }
+
+        updateCanvasLayers( )
+    }
+
+    private fun updateCanvasLayers() {
+        ( binding.canvas as CanvasView ).apply {
+            layers = canvasManager.getLayers()
+            invalidateLayers()
+        }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        // todo: canvas doesnt get moved or scaled
+        if (event.pointerCount < 2) {
+            super.onTouchEvent(event);
+            return true
+        }
+
+        when ( event.actionMasked ) {
+            MotionEvent.ACTION_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
+                // on press ( aka event down) we want to store the initial
+                // touch position
+
+                firstTouchDistance = hypot(
+                    (event.getX(1) - event.getX(0)).toDouble(),
+                    (event.getY(1) - event.getY(0)).toDouble()
+                ).toFloat()
+
+                lastTouchMidPoint[0] = (event.getX(0) + event.getX(1)) / 2f
+                lastTouchMidPoint[1] = (event.getY(0) + event.getY(1)) / 2f
+            }
+            MotionEvent.ACTION_MOVE -> {
+                // canvas pos
+                val newX = (event.getX(0) + event.getX(1)) / 2f
+                val newY = (event.getY(0) + event.getY(1)) / 2f
+
+                val deltaX = newX - lastTouchMidPoint[0]
+                val deltaY = newY - lastTouchMidPoint[1]
+
+                // we got move offset from last touch
+                canvasOffset[0] += deltaX
+                canvasOffset[1] += deltaY
+
+                // update touch!
+                lastTouchMidPoint[0] = newX
+                lastTouchMidPoint[1] = newY
+
+                // canvas zoom
+                val currentDistance = hypot(
+                    (event.getX(1) - event.getX(0)).toDouble(),
+                    (event.getY(1) - event.getY(0)).toDouble()
+                ).toFloat()
+
+                val scaleFactor = currentDistance / firstTouchDistance
+
+                // does scale scale about mid or posxy?
+                binding.canvas.scaleX *= scaleFactor
+                binding.canvas.scaleY *= scaleFactor
+
+                // reset for next move
+                firstTouchDistance = currentDistance
+
+
+                binding.canvas.translationX = canvasOffset[0]
+                binding.canvas.translationY = canvasOffset[1]
+            }
+        }
+
+        return super.onTouchEvent(event)
     }
 
     private fun updateOverlayStops() {

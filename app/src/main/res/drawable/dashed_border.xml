@@ -4,7 +4,7 @@
     <solid android:color="@android:color/transparent" />
     <stroke
         android:width="2dp"
-        android:color="#40000000"
+        android:color="@color/colorCanvasBorder"
         android:dashWidth="6dp"
         android:dashGap="4dp" />
     <corners android:radius="2dp" />
