@@ -52,4 +52,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // colorpicker lib from https://github.com/duanhong169/ColorPicker
+    // colorpicker deps
+    // "java.lang.ClassNotFoundException: Didn't find class "android.support.constraint.ConstraintLayout""
+    // need to add the deprecated constraintlayout lib
+    implementation(libs.constraintlayoutdeprecated)
+    implementation(libs.checkerboarddrawable)
+    implementation(libs.colorpicker)
 }
+

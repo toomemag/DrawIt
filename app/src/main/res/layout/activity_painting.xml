@@ -86,39 +86,76 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/layersContainerContainer">
 
-            <Button
+            <!-- https://stackoverflow.com/a/54713480 -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/toolPen"
                 android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="5dp"
                 android:layout_marginStart="0dp"
-                android:text="P" />
+                app:icon="@drawable/baseline_border_color_24"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/toolBrush"
                 android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="5dp"
                 android:layout_marginStart="0dp"
-                android:text="B" />
+                app:icon="@drawable/baseline_format_paint_24"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/toolFill"
                 android:layout_width="40dp"
                 android:layout_height="wrap_content"
-                android:text="F" />
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="0dp"
+                app:icon="@drawable/baseline_format_color_fill_24"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toolEraser"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="0dp"
+                app:icon="@drawable/baseline_folder_24"
+                android:rotation="-90"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toolPicker"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                app:icon="@drawable/baseline_colorize_24"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
 
             <Space
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
-            <View
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/colorPicker"
                 android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@android:color/holo_blue_light"
-                android:layout_marginEnd="8dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="0dp"
+                app:icon="@drawable/baseline_color_lens_24"
+                app:iconPadding="0dp"
+                app:iconGravity="textStart"
+                />
 
             <Button
                 android:id="@+id/effectsButton"
@@ -143,26 +180,26 @@
                 android:orientation="horizontal"
                 >
 
-                <!--            todo: add "material" for bg -->
-
-                <TextView
+                <!-- todo: add "material" for bg -->
+                <!-- todo: add support for reordering layers -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/newLayer"
-                    android:width="80dp"
-                    android:height="80dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginStart="0dp"
+                    app:iconPadding="0dp"
+                    app:iconGravity="textStart"
                     android:background="#22000000"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="4dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="80sp"
-                    android:text="+"
+                    app:icon="@drawable/baseline_add_72"
+                    app:iconTint="@color/colorCanvasBorder"
                     android:layout_gravity="center" />
             </LinearLayout>
         </HorizontalScrollView>
 
 
         <FrameLayout
-            android:id="@+id/canvasContainer"
+            android:id="@+id/canvasContainerOuter"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintTop_toBottomOf="@id/titlebar"
@@ -170,13 +207,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <com.example.drawit.painting.CanvasView
-                android:id="@+id/canvas"
+            <!-- todo: add bg from parent and make guideline grid for pixels -->
+            <LinearLayout
+                android:id="@+id/canvasContainer"
                 android:layout_width="380dp"
                 android:layout_height="380dp"
                 android:layout_gravity="center"
+                android:padding="2dp"
                 android:background="@drawable/dashed_border">
-            </com.example.drawit.painting.CanvasView>
+                <com.example.drawit.painting.CanvasView
+                    android:id="@+id/canvas"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent" />
+            </LinearLayout>
+
         </FrameLayout>
 
         <androidx.constraintlayout.widget.Guideline

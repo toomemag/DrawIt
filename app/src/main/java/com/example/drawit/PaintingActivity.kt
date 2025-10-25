@@ -1,5 +1,7 @@
 package com.example.drawit
 
+import android.content.res.ColorStateList
+import android.graphics.Canvas
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -20,6 +22,8 @@ import com.example.drawit.painting.CanvasManager
 import kotlin.math.abs
 import kotlin.math.max
 import com.example.drawit.painting.CanvasView
+import com.google.android.material.button.MaterialButton
+import top.defaults.colorpicker.ColorPickerPopup
 
 class PaintingActivity : AppCompatActivity() {
     // binding for activity_painting.xml
@@ -113,12 +117,40 @@ class PaintingActivity : AppCompatActivity() {
             syncLayersToView()
         }
 
+
+        // todo: dark mode -> white text on white bg, popup background doesnt change based on system theme
+        findViewById<MaterialButton>(R.id.colorPicker).setOnClickListener { view ->
+            android.util.Log.d("ColorPicker", "Color picker clicked")
+            try {
+                // using duanhong169 colorpicker lib
+                ColorPickerPopup.Builder(this@PaintingActivity)
+                    .initialColor(canvasManager.getColor())
+                    .enableBrightness(true)
+                    .enableAlpha(true) // bitmap has alpha field, why not use it
+                    .okTitle("Select") // from github example
+                    .cancelTitle("Cancel")
+                    .showIndicator(true)
+                    .showValue(true)
+                    .build()
+                    .show(view, object : ColorPickerPopup.ColorPickerObserver() {
+                        override fun onColorPicked(color: Int) {
+                            android.util.Log.d("ColorPicker", "color picked: $color")
+                            canvasManager.setColor(color)
+                            findViewById<MaterialButton>(R.id.colorPicker).setIconTint(ColorStateList.valueOf(color))
+                        }
+                    })
+            } catch (e: Exception) {
+                e.printStackTrace()
+                android.util.Log.e("ColorPicker", "popup err: ${e.message}", e)
+            }
+        }
+
         syncLayersToView()
         updateCanvasLayers()
 
         // canvas paint callback
         binding.canvas.setOnTouchListener { v, event ->
-            // todo: >1 finger gesture crashes app, could be from here or from view event listener
+            // todo: >2 finger gestures inside canvas start teleporting the canvas around at some point
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     onLayerPaint(v as CanvasView, event)
@@ -128,12 +160,25 @@ class PaintingActivity : AppCompatActivity() {
                     if (event.pointerCount == 1) {
                         wasDrawing = true
                         onLayerPaint(v as CanvasView, event)
+                    } else if (event.pointerCount >= 2) {
+                        // delegate >2 finger gestures to onTouchEvent
+                        // otherwise wouldnt be able to move/scale canvas when gesturing inside canvas
+                        onTouchEvent(event)
                     }
                     true
                 }
-                else -> {
-                    // ACTION_UP & whatever, just cancel drawing state
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    // delegate to activity's onTouchEvent
+                    onTouchEvent(event)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    // update previews (needs refactoring to refresh canvases, no need to delete and recreate)
+                    syncLayersToView( )
                     wasDrawing = false
+                    true
+                }
+                else -> {
                     v?.performClick()
                     false
                 }
@@ -182,11 +227,11 @@ class PaintingActivity : AppCompatActivity() {
                     val interpX = (lastX + t * (x - lastX)).toInt()
                     val interpY = (lastY + t * (y - lastY)).toInt()
 
-                    layer.bitmap[interpX, interpY] = 0xFFFFFFFF.toInt()
+                    layer.bitmap[interpX, interpY] = canvasManager.getColor()
                 }
             }
 
-            layer.bitmap[x, y] = 0xFFFFFFFF.toInt()
+            layer.bitmap[x, y] = canvasManager.getColor()
 
             lastCanvasDrawPoint[0] = x
             lastCanvasDrawPoint[1] = y
@@ -196,19 +241,60 @@ class PaintingActivity : AppCompatActivity() {
         }
     }
 
+    // layers row update
     private fun syncLayersToView() {
-        binding.layersContainer.removeViews(0, binding.layersContainer.childCount - 1)
+        // todo: could separate into addNewLayer and refreshLayers
+        // right now clearing all older views and think this is performance overhead
+        if (binding.layersContainer.childCount > 1)
+            binding.layersContainer.removeViews(1, binding.layersContainer.childCount - 1)
 
+        var addButton = binding.newLayer;
+
+        // scale to dp
+        val layerPreviewSizePx = (80 * resources.displayMetrics.density).toInt()
+        val borderWidthPx = resources.displayMetrics.density.toInt()
+
+        // update all canvas layer previews
         for (layer in canvasManager.getLayers()) {
-            val layerView = TextView(this).apply {
-                text = layer.name
-                textSize = 18f
-                setPadding(20, 20, 20, 20)
-                setBackgroundColor( 0x22000000 )
+            val previewBitmap = androidx.core.graphics.createBitmap(layerPreviewSizePx, layerPreviewSizePx)
+            val previewCanvas = Canvas(previewBitmap)
+            layer.spewToCanvas(previewCanvas, layerPreviewSizePx, layerPreviewSizePx)
+
+            // todo: light mode support
+            var borderColor = 0xFF404040.toInt()
+            if (layer.isActive) {
+                borderColor = 0XFF808080.toInt()
+            }
+
+            val layerContainer = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
                 layoutParams = ViewGroup.MarginLayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
+                    layerPreviewSizePx,
+                    layerPreviewSizePx
+                ).apply {
+                    marginStart = 8
+                    marginEnd = 8
+                }
+                setBackgroundColor(borderColor)
+            }
+
+            val layerPreviewView = android.widget.ImageView(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ).apply {
+                    topMargin = 4
+                    bottomMargin = 4
+                    leftMargin = 4
+                    rightMargin = 4
+                }
+
+                setImageBitmap(previewBitmap)
+
+                // border
+                setBackgroundColor(android.graphics.Color.BLACK)
+                setPadding(borderWidthPx, borderWidthPx, borderWidthPx, borderWidthPx)
+
                 setOnClickListener {
                     val index = canvasManager.getLayers().indexOf(layer)
                     val activeIndex = canvasManager.getActiveLayerIndex()
@@ -222,12 +308,24 @@ class PaintingActivity : AppCompatActivity() {
                         // we would get stale active state inside canvas
                         // aka wrong layer (old active) rendered at full opacity
                         binding.canvas.invalidateLayers()
+
+                        // update border colors (no better way to do it atm)
+                        syncLayersToView()
                     }
                 }
             }
 
-            // before "+" layer
-            binding.layersContainer.addView(layerView, binding.layersContainer.childCount - 1)
+            layerContainer.addView(layerPreviewView)
+
+            // Debug logging
+            layerContainer.post {
+                android.util.Log.d("LayerDebug", "layerContainer: ${layerContainer.width}x${layerContainer.height}, measured: ${layerContainer.measuredWidth}x${layerContainer.measuredHeight}")
+                android.util.Log.d("LayerDebug", "layerPreviewView: ${layerPreviewView.width}x${layerPreviewView.height}, measured: ${layerPreviewView.measuredWidth}x${layerPreviewView.measuredHeight}")
+                android.util.Log.d("LayerDebug", "layerPreviewView layoutParams: ${layerPreviewView.layoutParams}")
+            }
+
+            // add after the "+" layer (which is at index 0)
+            binding.layersContainer.addView(layerContainer, binding.layersContainer.childCount)
         }
 
         updateCanvasLayers()
@@ -249,7 +347,7 @@ class PaintingActivity : AppCompatActivity() {
         }
 
         when ( event.actionMasked ) {
-            MotionEvent.ACTION_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
+            MotionEvent.ACTION_POINTER_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
                 // on press ( aka event down) we want to store the initial
                 // touch position
 
@@ -260,6 +358,8 @@ class PaintingActivity : AppCompatActivity() {
 
                 lastTouchMidPoint[0] = (event.getX(0) + event.getX(1)) / 2f
                 lastTouchMidPoint[1] = (event.getY(0) + event.getY(1)) / 2f
+
+                android.util.Log.d( "PaintingActivity::onTouchEvent(2+gesture)", "ACTION_DOWN dist=${firstTouchDistance} midpoint=<${lastTouchMidPoint[0]},${lastTouchMidPoint[1]}>" )
             }
             MotionEvent.ACTION_MOVE -> {
                 // canvas pos
@@ -283,17 +383,19 @@ class PaintingActivity : AppCompatActivity() {
                     (event.getY(1) - event.getY(0)).toDouble()
                 ).toFloat()
 
-                val scaleFactor = currentDistance / firstTouchDistance
+                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 2f)
 
                 // does scale scale about mid or posxy?
-                binding.canvas.scaleX *= scaleFactor
-                binding.canvas.scaleY *= scaleFactor
+                binding.canvasContainer.scaleX *= scaleFactor
+                binding.canvasContainer.scaleY *= scaleFactor
 
                 // reset for next move
                 firstTouchDistance = currentDistance
 
-                binding.canvas.translationX = canvasOffset[0]
-                binding.canvas.translationY = canvasOffset[1]
+                binding.canvasContainer.translationX = canvasOffset[0]
+                binding.canvasContainer.translationY = canvasOffset[1]
+
+                android.util.Log.d( "PaintingActivity::onTouchEvent(2+gesture)", "ACTION_MOVE delta=<${deltaX},${deltaY}> scale=${scaleFactor} newOffset=<${canvasOffset[0]},${canvasOffset[1]}>" )
             }
         }
 

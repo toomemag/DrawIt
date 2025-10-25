@@ -1,7 +1,14 @@
 package com.example.drawit.painting
 
+enum class PaintTool {
+    PEN, BRUSH, FILL, ERASER
+}
+
 class CanvasManager {
     private val layers = mutableListOf<Layer>()
+    private var paintColor: Int = 0xFFFFFFFF.toInt()
+    private var brushSize: Int = 1
+    private var currentTool: PaintTool = PaintTool.PEN
 
     init {
         layers.add(Layer(name = "Layer1"))
@@ -48,4 +55,10 @@ class CanvasManager {
     }
 
     fun getLayer(index: Int): Layer? = layers.getOrNull(index)
+
+    fun setColor(color: Int) {
+        paintColor = color
+    }
+
+    fun getColor(): Int = paintColor
 }

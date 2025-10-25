@@ -21,11 +21,14 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
         // scale bitmap to fill the view size
         bitmapScaleRect.set(0, 0, width, height)
 
+        val anySelected = layers.stream().anyMatch { layer -> layer.isActive }
+        val globalAlpha = if (!anySelected) 255 else 55
+
         // draw all layers
         for (i in layers.indices) {
             val layer = layers[i]
 
-            paint.alpha = if (layer.isActive) 255 else 55
+            paint.alpha = if (layer.isActive) 255 else globalAlpha
             canvas.drawBitmap(layer.bitmap, null, bitmapScaleRect, paint)
         }
     }
