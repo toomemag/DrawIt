@@ -1,13 +1,15 @@
+package com.example.drawit.painting.effects
+
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import com.example.drawit.painting.effects.BaseEffect
-import com.example.drawit.painting.effects.GyroscopeEffect
 
 // todo: make global singleton
 //       creates all midllewares for available sensors and maps to
 //       corresponding effect classes
-class EffectManager(private val context: Context) {
+class EffectManager(
+    private val context: Context
+) {
     private val sensorManager: SensorManager = context.getSystemService(SensorManager::class.java) ?: throw Exception("no sensor manager")
 
     // map sensor type to first sensor
@@ -42,29 +44,49 @@ class EffectManager(private val context: Context) {
 
         for (sensor in sensors) {
             if (!sensorToEffectClass.containsKey(sensor.type)) {
-                android.util.Log.i("EffectManager", "no effect class mapped for sensor: ${sensor.name} of type ${sensor.type}")
+                android.util.Log.i("EffectManager", "init - no effect class mapped for sensor: ${sensor.name} of type ${sensor.type}")
                 continue
             }
 
             // add first effect wrapper for sensor to map
             availableEffects[sensor.type] = sensorToEffectClass[sensor.type]!!.getDeclaredConstructor(Sensor::class.java).newInstance(sensor)
+            android.util.Log.i("EffectManager", "init - added effect ${sensorToEffectClass[sensor.type]} for sensor ${sensor.name}")
         }
 
         // maybe map sensors to corresponding effect classes here later
     }
 
-    // we'd have to cast and check for sensor in View
-    // a better solution would be to have a "subscribe" system
-    // so a view can subscribe to whatever effect it wants
-    fun handleSensorEvent(sensorEvent: android.hardware.SensorEvent): Any? {
-        // do we have an effect for this sensor type?
-        val effect = availableEffects[sensorEvent.sensor.type] ?: return null
-
-        // delegate to effect
-        return effect.translateSensorEvent(sensorEvent)
+    // this literally came to me in a dream
+    // what if we create a "context" in views from manager, so that all events are passed to context's sensorevent listener
+    // context filters events out by sensor types and calls listening callbacks
+    //
+    // ctx = effectManager.createContext()
+    // ctx.addSensorListener(Sensor.TYPE_GYROSCOPE, gyroscopeEffect -> {
+    //      ...
+    // }
+    // ...
+    // inside onSensorChanged in view we call
+    //      ctx.onSensorChanged(sensorEvent)
+    // context calls listening listeners 📞
+    //
+    // why not here? context would be tied to a view's lifecycle, not global manager
+    // so that way we don't have to worry about unregistering listeners when view is destroyed etc
+    fun createContext(): EffectContext {
+        return EffectContext(this)
     }
 
-    fun getAvailableEffects(): Map<Int, BaseEffect<*>> {
-        return availableEffects.toMap()
+    fun getEffect(sensorType: Int): BaseEffect<*>? {
+        return availableEffects[sensorType]
+    }
+
+    fun getSensorManager(): SensorManager {
+        return sensorManager
+    }
+
+    // https://stackoverflow.com/a/45952201
+    // maybe it's useful at any point
+    inline fun <reified T : BaseEffect<*>> getEffect(): T? {
+        val entry = sensorToEffectClass.entries.firstOrNull { it.value == T::class.java } ?: return null
+        return availableEffects[entry.key] as? T
     }
 }

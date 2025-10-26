@@ -1,4 +1,5 @@
 package com.example.drawit.painting.effects
+
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 
@@ -8,21 +9,30 @@ data class Vector(
     var z: Float = 0f
 )
 
-class GyroscopeEffect(
+// https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/
+// "Instructs the Kotlin compiler to generate overloads for this function that substitute default parameter values."
+// without it name can't be omitted when only passing a sensor object
+class GyroscopeEffect @JvmOverloads constructor(
     sensor: Sensor,
     name: String = "Gyroscope"
 ) : BaseEffect<Vector>(sensor, name) {
     private val ret: Vector = Vector()
 
     override fun translateSensorEvent(sensorEvent: SensorEvent): Vector {
-        val velX = sensorEvent.values[0];
-        val velY = sensorEvent.values[0];
-        val velZ = sensorEvent.values[0];
+        val velX = sensorEvent.values[0]
+        val velY = sensorEvent.values[1]
+        val velZ = sensorEvent.values[2]
 
-        ret.x += velX;
-        ret.y += velY;
-        ret.z += velZ;
+        ret.x += velX
+        ret.y += velY
+        ret.z += velZ
 
-        return ret;
+        return ret
+    }
+
+    override fun reset() {
+        ret.x = 0f
+        ret.y = 0f
+        ret.z = 0f
     }
 }

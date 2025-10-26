@@ -2,6 +2,9 @@ package com.example.drawit
 
 import android.content.res.ColorStateList
 import android.graphics.Canvas
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -22,10 +25,12 @@ import com.example.drawit.painting.CanvasManager
 import kotlin.math.abs
 import kotlin.math.max
 import com.example.drawit.painting.CanvasView
+import com.example.drawit.painting.effects.EffectContext
+import com.example.drawit.painting.effects.GyroscopeEffect
 import com.google.android.material.button.MaterialButton
 import top.defaults.colorpicker.ColorPickerPopup
 
-class PaintingActivity : AppCompatActivity() {
+class PaintingActivity : AppCompatActivity(), SensorEventListener {
     // binding for activity_painting.xml
     private lateinit var binding: ActivityPaintingBinding
     // whole canvas manager
@@ -42,6 +47,7 @@ class PaintingActivity : AppCompatActivity() {
     private var wasDrawing: Boolean = false
     // stored as pixel pos
     private var lastCanvasDrawPoint: Array<Int> = arrayOf(0, 0)
+    private lateinit var effectContext: EffectContext
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +61,18 @@ class PaintingActivity : AppCompatActivity() {
 
         val mode = intent.getStringExtra("mode") ?: "free_mode"
         binding.titleText.text = if (mode == "daily_theme") "Theme" else "Freemode"
+
+        effectContext = (application as DrawItApplication).effectManager.createContext()
+        effectContext.addSensorListener<GyroscopeEffect>(Sensor.TYPE_GYROSCOPE) { effect, sensorEvent ->
+            val ret = effect.translateSensorEvent(sensorEvent)
+
+            val layers = canvasManager.getLayers()
+
+            if (layers.size > 1 && canvasManager.getActiveLayerIndex() == -1) {
+                layers[0].setPos(ret.y.toInt().coerceIn(-60, 60), ret.x.toInt().coerceIn(-60, 60))
+                updateCanvasLayers()
+            }
+        }
 
         // titlebar would be below the phone's status bar, so add padding to compensate
         val originalTitlebarPaddingTop = binding.titlebar.paddingTop
@@ -186,6 +204,16 @@ class PaintingActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        effectContext.registerSensorListeners(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        effectContext.unregisterSensorListeners(this)
+    }
+
     private fun onLayerPaint(v: CanvasView, event: MotionEvent): Boolean {
         val activeIndex = canvasManager.getActiveLayerIndex()
         val layer = canvasManager.getLayer(activeIndex)
@@ -300,9 +328,25 @@ class PaintingActivity : AppCompatActivity() {
                     val activeIndex = canvasManager.getActiveLayerIndex()
                     if (index != -1) {
                         // bug: can click between layers and that selects no layer
-                        if (index != activeIndex)
+                        if (index != activeIndex) {
+                            // if we had no layer selected before -> in preview mode
+                            // if we switch from preview to active layer (edit mode)
+                            // layer pos offsets from event listeners stay
+                            if (activeIndex == -1) {
+                                // reset all layer offsets
+                                for (l in canvasManager.getLayers()) {
+                                    l.setPos(0, 0)
+                                }
+                            }
                             canvasManager.setActiveLayer(index)
-                        else canvasManager.setActiveLayer(-1)
+                        } else {
+                            canvasManager.setActiveLayer(-1)
+
+                            // reset sensor data
+                            // for gyro sets all pos fields to 0, otherwise phone rotation will
+                            // be carried over preview switches
+                            effectContext.resetAllEffects()
+                        }
 
                         // update drawing area, if we switch layers without this here
                         // we would get stale active state inside canvas
@@ -400,6 +444,15 @@ class PaintingActivity : AppCompatActivity() {
         }
 
         return super.onTouchEvent(event)
+    }
+
+    // sensor events
+    override fun onSensorChanged(sensorEvent: SensorEvent) {
+        effectContext.onSensorChanged(sensorEvent)
+    }
+
+    override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {
+        // from SensorEventListener, don't need it i think
     }
 
     // grid background update

@@ -21,4 +21,5 @@ abstract class BaseEffect<T>(
     // eventlisteners have to be set up in views though, since I think that's
     // the only context we can listen for sensor updates
     abstract fun translateSensorEvent(sensorEvent: SensorEvent): T
+    abstract fun reset()
 }

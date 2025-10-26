@@ -10,13 +10,19 @@ class Layer(var name: String = "Layer") {
     var bitmap: Bitmap = createBitmap(128, 128)
     // cant access canvasmanager from activity view
     var isActive: Boolean = true
+    var offset: Array<Int> = arrayOf(0, 0)
 
     var paint = android.graphics.Paint().apply {
         isAntiAlias = false
         isFilterBitmap = false
     }
 
-    fun spewToCanvas(canvas: Canvas, width: Int, height: Int, rect: Rect = Rect(0, 0, width, height), paint: android.graphics.Paint = this.paint) {
+    fun setPos(x: Int, y: Int) {
+        offset[0] = x
+        offset[1] = y
+    }
+
+    fun spewToCanvas(canvas: Canvas, width: Int, height: Int, rect: Rect = Rect(offset[0], offset[1], width, height), paint: android.graphics.Paint = this.paint) {
         canvas.drawBitmap(bitmap, null, rect, paint)
     }
 }
