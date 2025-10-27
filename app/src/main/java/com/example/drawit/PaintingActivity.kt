@@ -25,10 +25,17 @@ import com.example.drawit.painting.CanvasManager
 import kotlin.math.abs
 import kotlin.math.max
 import com.example.drawit.painting.CanvasView
+import com.example.drawit.painting.Layer
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
 import com.google.android.material.button.MaterialButton
 import top.defaults.colorpicker.ColorPickerPopup
+
+enum class CanvasGestureState {
+    IDLE,
+    PAINTING,
+    GESTURE
+}
 
 class PaintingActivity : AppCompatActivity(), SensorEventListener {
     // binding for activity_painting.xml
@@ -44,7 +51,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
     // frames arent consistent, if we move a finger along the canvas
     // some pixels in between get skipped -> need to track last drawn point
-    private var wasDrawing: Boolean = false
+    private var drawingState: CanvasGestureState = CanvasGestureState.IDLE
+
     // stored as pixel pos
     private var lastCanvasDrawPoint: Array<Int> = arrayOf(0, 0)
     private lateinit var effectContext: EffectContext
@@ -168,32 +176,71 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
         // canvas paint callback
         binding.canvas.setOnTouchListener { v, event ->
-            // todo: >2 finger gestures inside canvas start teleporting the canvas around at some point
+            // dragging comments:
+            //  first finger is in canvas, zoom is doomed
+            //  first finger outside of canvas, second finger inside, all fine.
+            //
+            // ideas:
+            //  could only paint on POINTER_UP when no move happened
+            //  that way we could wait for pinching gesture so we can cancel painting
+            if (event.pointerCount > 1) {
+                // cancel drawing action
+                drawingState = CanvasGestureState.GESTURE
+
+                // delegate to activity's onTouchEvent
+                onTouchEvent(event)
+                return@setOnTouchListener false
+            }
+
+
+            // reset gesture state when in gesture & last finger lifted
+            if (event.pointerCount == 1 && drawingState == CanvasGestureState.GESTURE && event.actionMasked == MotionEvent.ACTION_UP) {
+                drawingState = CanvasGestureState.IDLE
+                return@setOnTouchListener false
+            }
+
+            // after gesturing we can't paint
+            if (drawingState == CanvasGestureState.GESTURE) return@setOnTouchListener false
+
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    onLayerPaint(v as CanvasView, event)
+                    // painting on pointer up
+                    drawingState = CanvasGestureState.PAINTING
+
+                    // store paint pos
+                    // think we could lose 1 pixel start accuracy if we don't do this
+                    val layers = canvasManager.getLayers()
+                    if (layers.isNotEmpty()) {
+                        val pressedPos = getBitmapPaintPosFromCanvas(layers[0], event.x, event.y)
+
+                        lastCanvasDrawPoint[0] = pressedPos[0]
+                        lastCanvasDrawPoint[1] = pressedPos[1]
+                    }
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    if (event.pointerCount == 1) {
-                        wasDrawing = true
-                        onLayerPaint(v as CanvasView, event)
-                    } else if (event.pointerCount >= 2) {
-                        // delegate >2 finger gestures to onTouchEvent
-                        // otherwise wouldnt be able to move/scale canvas when gesturing inside canvas
-                        onTouchEvent(event)
-                    }
+                    // bug: sometimes when gesturing, first finger down moves and causes a paint
+                    //      we can fix this by adding something similar to debounce
+                    //      aka wait 200-300ms before allowing painting after finger was down
+                    //      OR wait for distance moved to match at least a 1px threshold
+                    onLayerPaint(v as CanvasView, event)
                     true
                 }
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     // delegate to activity's onTouchEvent
-                    onTouchEvent(event)
-                    true
+                    //onTouchEvent(event)
+                    false
                 }
                 MotionEvent.ACTION_UP -> {
+                    // paint last pixel if we we're drawing
+                    if (drawingState == CanvasGestureState.PAINTING)
+                        onLayerPaint(v as CanvasView, event)
+
                     // update previews (needs refactoring to refresh canvases, no need to delete and recreate)
                     syncLayersToView( )
-                    wasDrawing = false
+
+                    drawingState = CanvasGestureState.IDLE
+
                     true
                 }
                 else -> {
@@ -214,6 +261,22 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         effectContext.unregisterSensorListeners(this)
     }
 
+    private fun getBitmapPaintPosFromCanvas(layer: Layer, x: Float, y: Float): Array<Int> {
+        val viewW = binding.canvas.width.toFloat().coerceAtLeast(1f)
+        val viewH = binding.canvas.height.toFloat().coerceAtLeast(1f)
+
+        val bmpW = layer.bitmap.width
+        val bmpH = layer.bitmap.height
+
+        val bmpX = ((x / viewW) * bmpW).toInt()
+        val bmpY = ((y / viewH) * bmpH).toInt()
+
+        val x = bmpX.coerceIn(0, bmpW - 1)
+        val y = bmpY.coerceIn(0, bmpH - 1)
+
+        return arrayOf(x, y)
+    }
+
     private fun onLayerPaint(v: CanvasView, event: MotionEvent): Boolean {
         val activeIndex = canvasManager.getActiveLayerIndex()
         val layer = canvasManager.getLayer(activeIndex)
@@ -225,20 +288,12 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             v.performClick()
             return false
         } else {
-            // event.x/y are in view (CanvasView) coordinates
-            val viewW = binding.canvas.width.toFloat().coerceAtLeast(1f)
-            val viewH = binding.canvas.height.toFloat().coerceAtLeast(1f)
-            val bmpW = layer.bitmap.width
-            val bmpH = layer.bitmap.height
-
-            val bmpX = ((event.x / viewW) * bmpW).toInt()
-            val bmpY = ((event.y / viewH) * bmpH).toInt()
-
-            val x = bmpX.coerceIn(0, bmpW - 1)
-            val y = bmpY.coerceIn(0, bmpH - 1)
+            val bitmapPaintPos = getBitmapPaintPosFromCanvas(layer, event.x, event.y)
+            val x = bitmapPaintPos[0]
+            val y = bitmapPaintPos[1]
 
             // if we we're in a constant drawing state, interpolate between last known point and current
-            if (wasDrawing) {
+            if (drawingState == CanvasGestureState.PAINTING) {
                 val lastX = lastCanvasDrawPoint[0]
                 val lastY = lastCanvasDrawPoint[1]
 
@@ -275,8 +330,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         // right now clearing all older views and think this is performance overhead
         if (binding.layersContainer.childCount > 1)
             binding.layersContainer.removeViews(1, binding.layersContainer.childCount - 1)
-
-        var addButton = binding.newLayer;
 
         // scale to dp
         val layerPreviewSizePx = (80 * resources.displayMetrics.density).toInt()
@@ -390,6 +443,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             return true
         }
 
+        // bug: zoom freaks  out if too zoomed in (i guess upper bound is hit?)
+        // bug: ACTION_POINTER_DOWN isn't called when 2nd finger lands
+
         when ( event.actionMasked ) {
             MotionEvent.ACTION_POINTER_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
                 // on press ( aka event down) we want to store the initial
@@ -427,7 +483,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     (event.getY(1) - event.getY(0)).toDouble()
                 ).toFloat()
 
-                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 2f)
+                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 5f)
 
                 // does scale scale about mid or posxy?
                 binding.canvasContainer.scaleX *= scaleFactor
@@ -438,8 +494,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
                 binding.canvasContainer.translationX = canvasOffset[0]
                 binding.canvasContainer.translationY = canvasOffset[1]
-
-                android.util.Log.d( "PaintingActivity::onTouchEvent(2+gesture)", "ACTION_MOVE delta=<${deltaX},${deltaY}> scale=${scaleFactor} newOffset=<${canvasOffset[0]},${canvasOffset[1]}>" )
             }
         }
 
@@ -451,7 +505,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         effectContext.onSensorChanged(sensorEvent)
     }
 
-    override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // from SensorEventListener, don't need it i think
     }
 

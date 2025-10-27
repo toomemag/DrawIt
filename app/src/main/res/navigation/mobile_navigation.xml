@@ -22,4 +22,10 @@
         android:name="com.example.drawit.ui.notifications.NotificationsFragment"
         android:label="@string/title_notifications"
         tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/navigation_apiexample"
+        android:name="com.example.drawit.ui.apiexample.ApiExampleFragment"
+        android:label="@string/title_apiexample"
+        tools:layout="@layout/fragment_apiexample" />
 </navigation>
