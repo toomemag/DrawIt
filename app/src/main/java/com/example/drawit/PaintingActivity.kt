@@ -222,6 +222,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     // bug: sometimes when gesturing, first finger down moves and causes a paint
                     //      we can fix this by adding something similar to debounce
                     //      aka wait 200-300ms before allowing painting after finger was down
+                    //      OR wait for distance moved to match at least a 1px threshold
                     onLayerPaint(v as CanvasView, event)
                     true
                 }
@@ -442,6 +443,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             return true
         }
 
+        // bug: zoom freaks  out if too zoomed in (i guess upper bound is hit?)
+        // bug: ACTION_POINTER_DOWN isn't called when 2nd finger lands
+
         when ( event.actionMasked ) {
             MotionEvent.ACTION_POINTER_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
                 // on press ( aka event down) we want to store the initial
@@ -479,7 +483,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     (event.getY(1) - event.getY(0)).toDouble()
                 ).toFloat()
 
-                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 2f)
+                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 5f)
 
                 // does scale scale about mid or posxy?
                 binding.canvasContainer.scaleX *= scaleFactor

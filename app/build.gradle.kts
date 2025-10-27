@@ -60,5 +60,9 @@ dependencies {
     implementation(libs.constraintlayoutdeprecated)
     implementation(libs.checkerboarddrawable)
     implementation(libs.colorpicker)
+
+    // gson for json parsing
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }
 

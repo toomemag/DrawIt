@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.apiexample.ApiExampleFragment"
+    android:padding="16dp"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    >
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonFetchData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="give me a chuck"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="30dp"
+        android:background="@drawable/dialog_bg"
+        android:orientation="vertical"
+        android:padding="8dp"
+    >
+        <TextView
+            android:id="@+id/outputText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="waiting for input"
+            android:textAlignment="center"
+            android:fontFamily="@font/drawn"
+            android:textFontWeight="800"
+            android:textSize="24sp"
+            />
+    </LinearLayout>
+</LinearLayout>
