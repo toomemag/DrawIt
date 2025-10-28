@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+
 class ApiExampleViewModel : ViewModel() {
     private val api : ChuckNorrisApiService = Retrofit.Builder()
         .baseUrl("https://api.chucknorris.io/")
@@ -27,7 +28,10 @@ class ApiExampleViewModel : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    fun fetchJoke() {
+    private val _categories = MutableLiveData<List<String>>()
+    val categories: LiveData<List<String>> = _categories
+
+    fun fetchJoke(cat: String) {
         // prevent spamming
         if (_isLoading.value == true) {
             return
@@ -43,7 +47,13 @@ class ApiExampleViewModel : ViewModel() {
             // we take the latest observer update in fragment, don't have to set every "state"
             // to default
             try {
-                val joke = api.getRandomJoke()
+                val joke : JokeResponse
+                System.err.println(cat)
+                if (cat.isEmpty() || cat == "No Category"){
+                    joke = api.getRandomJoke()
+                } else {
+                    joke = api.getJokeByCategory(cat)
+                }
                 _response.postValue(joke)
             } catch (_: java.net.UnknownHostException) {
                 _error.postValue("No internet connection.")
@@ -53,5 +63,26 @@ class ApiExampleViewModel : ViewModel() {
                 _isLoading.postValue(false)
             }
         }
+    }
+
+    fun fetchCategories() {
+        if (_isLoading.value == true) {
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.postValue(true)
+
+            try {
+                val cats = api.getCategories()
+                _categories.postValue(cats)
+            } catch (e: Exception) {
+                _error.postValue("Failed to load categories: ${e.message}")
+            } finally {
+                _isLoading.postValue(false)
+            }
+
+        }
+
     }
 }

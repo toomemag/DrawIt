@@ -8,6 +8,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <color name="textPrimary">#FFFFFFFF</color>
+
     <color name="popupBackground">#212121</color>
     <color name="colorCanvasBorder">#40ffffff</color>
 </resources>
