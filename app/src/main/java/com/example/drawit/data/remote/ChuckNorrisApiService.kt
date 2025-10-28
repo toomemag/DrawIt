@@ -9,4 +9,14 @@ interface ChuckNorrisApiService {
     @GET("jokes/random")
     @Headers("Accept: application/json")
     suspend fun getRandomJoke(): JokeResponse
+
+    @GET("jokes/random")
+    @Headers("Accept: application/json")
+    suspend fun getJokeByCategory(
+        @retrofit2.http.Query("category") category: String
+    ): JokeResponse
+
+    @GET("jokes/categories")
+    @Headers("Accept: application/json")
+    suspend fun getCategories(): List<String>
 }
