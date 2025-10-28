@@ -29,7 +29,11 @@ import com.example.drawit.painting.Layer
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
 import com.google.android.material.button.MaterialButton
-import top.defaults.colorpicker.ColorPickerPopup
+//import top.defaults.colorpicker.ColorPickerPopup
+import com.skydoves.colorpickerview.ColorEnvelope
+import com.skydoves.colorpickerview.ColorPickerDialog
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+
 
 enum class CanvasGestureState {
     IDLE,
@@ -144,31 +148,25 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         }
 
 
-        // todo: dark mode -> white text on white bg, popup background doesnt change based on system theme
-        findViewById<MaterialButton>(R.id.colorPicker).setOnClickListener { view ->
-            android.util.Log.d("ColorPicker", "Color picker clicked")
-            try {
-                // using duanhong169 colorpicker lib
-                ColorPickerPopup.Builder(this@PaintingActivity)
-                    .initialColor(canvasManager.getColor())
-                    .enableBrightness(true)
-                    .enableAlpha(true) // bitmap has alpha field, why not use it
-                    .okTitle("Select") // from github example
-                    .cancelTitle("Cancel")
-                    .showIndicator(true)
-                    .showValue(true)
-                    .build()
-                    .show(view, object : ColorPickerPopup.ColorPickerObserver() {
-                        override fun onColorPicked(color: Int) {
-                            android.util.Log.d("ColorPicker", "color picked: $color")
-                            canvasManager.setColor(color)
-                            findViewById<MaterialButton>(R.id.colorPicker).setIconTint(ColorStateList.valueOf(color))
-                        }
-                    })
-            } catch (e: Exception) {
-                e.printStackTrace()
-                android.util.Log.e("ColorPicker", "popup err: ${e.message}", e)
-            }
+        // DONE!: dark mode -> white text on white bg, popup background doesnt change based on system theme
+        // TODO: choose colors for this type of menu.
+        findViewById<MaterialButton>(R.id.colorPicker).setOnClickListener {
+
+            ColorPickerDialog.Builder(this)
+                .setTitle("Select a Color")
+                .setPositiveButton("Select", ColorEnvelopeListener { envelope: ColorEnvelope, _ ->
+                    val color = envelope.color
+                    canvasManager.setColor(color)
+                    findViewById<MaterialButton>(R.id.colorPicker).setIconTint(ColorStateList.valueOf(color))
+                })
+
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+
+                .attachAlphaSlideBar(true)
+                .attachBrightnessSlideBar(true)
+                .show()
         }
 
         syncLayersToView()

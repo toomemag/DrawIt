@@ -57,8 +57,8 @@ dependencies {
     // colorpicker deps
     // "java.lang.ClassNotFoundException: Didn't find class "android.support.constraint.ConstraintLayout""
     // need to add the deprecated constraintlayout lib
-    implementation(libs.constraintlayoutdeprecated)
-    implementation(libs.checkerboarddrawable)
+    //implementation(libs.constraintlayoutdeprecated)
+    //implementation(libs.checkerboarddrawable)
     implementation(libs.colorpicker)
 
     // gson for json parsing
