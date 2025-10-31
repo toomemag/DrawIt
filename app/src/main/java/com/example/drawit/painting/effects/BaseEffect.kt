@@ -9,7 +9,8 @@ import android.hardware.SensorEvent
 abstract class BaseEffect<T>(
     protected var sensor: Sensor,
     protected var name: String,
-    protected var description: String
+    protected var description: String,
+    protected var inputOptions: List<String>
 ) {
     // what do we need for effects
     // initial idea was to have a mapping input -> output
@@ -21,7 +22,9 @@ abstract class BaseEffect<T>(
     // these middleware classes translate them
     // eventlisteners have to be set up in views though, since I think that's
     // the only context we can listen for sensor updates
-    abstract fun translateSensorEvent(sensorEvent: SensorEvent): T
+    abstract fun translateSensorEvent(sensorEvent: SensorEvent): List<T>
+    // translate input based on translated sensor values
+    abstract fun transformInput(inputValues: List<T>): List<T>
     abstract fun reset()
 
     // we need a way to get layer inputs to map to layer outputs (xy, scale, rotation, have to think what else)
@@ -29,10 +32,16 @@ abstract class BaseEffect<T>(
     // layer should store all data about its' effects
     // we only deal with ""raw"" data in effect classes meaning simple input -> output mapping
     // what we do need is to let the layer know what inputs are available
-    abstract fun getInputOptions(): List<String>
+    fun getEffectInputOptions(): List<String> {
+        return inputOptions
+    }
     // when an effect input, eg. gyro.yaw is applied to layer.x, all others not set
     // we need to pass [null, inputValue, null] to <something> to get the output parameter we want to modify
     // this means layers would need transform functions for each applied effect (but how can we implement that, input types vary)
+
+    // what if we return sensor values all in an array, so layers can filter out what they want based on a bitmask
+    // eg input options returns [Int], layer uses [true]... grr won't help, layer should just map, masking is useless and
+    // introduces unnecessary complexity imo
 
     fun getEffectName(): String {
         return name

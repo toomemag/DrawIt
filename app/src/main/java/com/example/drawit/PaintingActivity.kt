@@ -84,7 +84,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             val layers = canvasManager.getLayers()
 
             if (layers.size > 1 && canvasManager.getActiveLayerIndex() == -1) {
-                layers[0].setPos(ret.y.toInt().coerceIn(-60, 60), ret.x.toInt().coerceIn(-60, 60))
+                layers[0].setPos(ret[1].toInt().coerceIn(-60, 60), ret[0].toInt().coerceIn(-60, 60))
                 updateCanvasLayers()
             }
         }
@@ -508,7 +508,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun updateCanvasLayers() {
         binding.canvas.apply {
-            layers = canvasManager.getLayers()
+            layers = canvasManager.getLayers().reversed()
             invalidateLayers()
         }
     }
