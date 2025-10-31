@@ -65,9 +65,7 @@ class EffectContext(
 
     fun onSensorChanged(sensorEvent: SensorEvent) {
         val sensorType: Int = sensorEvent.sensor.type
-        val effect: BaseEffect<*>? = effectManager.getEffect(sensorType)
-
-        if (effect == null) return
+        val effect: BaseEffect<*> = effectManager.getEffect(sensorType) ?: return
 
         val listeners = sensorListeners[sensorType] ?: return
 

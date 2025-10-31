@@ -21,6 +21,9 @@ import com.example.drawit.databinding.DialogPausePaintingBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.hypot
 import androidx.core.graphics.set
+import com.example.drawit.databinding.DialogAddedEffectsBinding
+import com.example.drawit.databinding.DialogNewEffectBinding
+import com.example.drawit.databinding.NodeEffectBinding
 import com.example.drawit.painting.CanvasManager
 import kotlin.math.abs
 import kotlin.math.max
@@ -148,10 +151,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         }
 
 
-        // DONE!: dark mode -> white text on white bg, popup background doesnt change based on system theme
-        // TODO: choose colors for this type of menu.
         findViewById<MaterialButton>(R.id.colorPicker).setOnClickListener {
-
             ColorPickerDialog.Builder(this)
                 .setTitle("Select a Color")
                 .setPositiveButton("Select", ColorEnvelopeListener { envelope: ColorEnvelope, _ ->
@@ -168,6 +168,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 .attachBrightnessSlideBar(true)
                 .show()
         }
+
+        // effects button takes us to current layer added effects dialog
+        findViewById<Button>(R.id.effectsButton).setOnClickListener { openAddedEffectsDialog( ) }
 
         syncLayersToView()
         updateCanvasLayers()
@@ -247,6 +250,83 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
+    }
+
+    private fun openAddedEffectsDialog() {
+        // no layer no effects
+        if (canvasManager.getActiveLayerIndex() == -1) return
+        val layer = canvasManager.getLayer(canvasManager.getActiveLayerIndex())!!
+
+        val dialogBinding = DialogAddedEffectsBinding.inflate(layoutInflater)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        dialogBinding.closeAddedEffects.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        if (layer.effects.isNotEmpty()) {
+            dialogBinding.noEffectsAddedText.height = 0
+
+            for (effect in layer.effects) {
+                val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
+
+                effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
+                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
+
+                effectItem.root.setOnClickListener {
+                    // todo: push to layer edit
+                    //       rn what's to do is effect edit/new layout
+                    //       and then layer serialization and backend (prob firebase)
+                    //       and then lastly one draft save/load system locally
+                }
+
+                dialogBinding.effectsListView.addView(effectItem.root)
+            }
+        }
+
+        dialogBinding.addNewEffect.setOnClickListener {
+            dialog.dismiss()
+            openEffectSelectionDialog()
+        }
+
+        dialog.show()
+    }
+
+    private fun openEffectSelectionDialog() {
+        val dialogBinding = DialogNewEffectBinding.inflate(layoutInflater)
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        dialogBinding.closeNewEffectsDialog.setOnClickListener {
+            dialog.dismiss()
+            openAddedEffectsDialog()
+        }
+
+        val effects = (application as DrawItApplication).effectManager.getEffects()
+
+        if (effects.isNotEmpty()) {
+            dialogBinding.noEffectText.height = 0
+
+            // dialogBinding.effectsListView
+            // push new effect layout to list
+            for (effect in effects) {
+                val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
+
+                effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
+                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
+
+                effectItem.root.setOnClickListener {
+                    // todo: push to new effect view
+                }
+
+                dialogBinding.effectsListView.addView(effectItem.root)
+            }
+        }
+
+        dialog.show()
     }
 
     override fun onResume() {

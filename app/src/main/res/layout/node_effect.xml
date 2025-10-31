@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp">
+    <!-- specific effect in added effects and effect selection -->
+    <TextView
+        android:id="@+id/effectName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="&lt;effect_name&gt;"
+        android:textSize="26sp"
+        android:fontFamily="@font/drawn"/>
+
+    <TextView
+        android:id="@+id/effectDesc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/drawn"
+        android:textSize="16sp"
+        android:text="&lt;effect_description&gt;" />
+</LinearLayout>

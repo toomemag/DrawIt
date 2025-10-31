@@ -79,6 +79,10 @@ class EffectManager(
         return availableEffects[sensorType]
     }
 
+    fun getEffects(): MutableCollection<BaseEffect<*>> {
+        return availableEffects.values
+    }
+
     fun getSensorManager(): SensorManager {
         return sensorManager
     }

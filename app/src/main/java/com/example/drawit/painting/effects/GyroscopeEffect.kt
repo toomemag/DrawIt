@@ -14,8 +14,9 @@ data class Vector(
 // without it name can't be omitted when only passing a sensor object
 class GyroscopeEffect @JvmOverloads constructor(
     sensor: Sensor,
-    name: String = "Gyroscope"
-) : BaseEffect<Vector>(sensor, name) {
+    name: String = "Gyroscope",
+    description: String = "Apply your device's rotation to layers"
+) : BaseEffect<Vector>(sensor, name, description) {
     private val ret: Vector = Vector()
 
     override fun translateSensorEvent(sensorEvent: SensorEvent): Vector {
@@ -34,5 +35,9 @@ class GyroscopeEffect @JvmOverloads constructor(
         ret.x = 0f
         ret.y = 0f
         ret.z = 0f
+    }
+
+    override fun getInputOptions(): List<String> {
+        return listOf("Pitch", "Yaw", "Roll")
     }
 }

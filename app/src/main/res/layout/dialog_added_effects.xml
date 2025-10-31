@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+    <!--  added effects  -->
+    <!--  feel like separating these could look cool  -->
+    <LinearLayout
+        android:id="@+id/effectsListView"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/dialog_bg"
+    >
+        <TextView
+            android:id="@+id/noEffectsAddedText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:padding="12sp"
+            android:fontFamily="@font/drawn"
+            android:textSize="24sp"
+            android:text="No effects added" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addNewEffect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/drawn"
+        android:text="Add Effect"
+        android:textSize="18sp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/closeAddedEffects"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/drawn"
+        android:backgroundTint="#ababab"
+        android:text="Close"
+        android:textSize="18sp"/>
+</LinearLayout>
