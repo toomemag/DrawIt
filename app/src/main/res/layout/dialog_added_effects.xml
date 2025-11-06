@@ -6,6 +6,14 @@
     android:padding="10dp">
     <!--  added effects  -->
     <!--  feel like separating these could look cool  -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10sp"
+        android:fontFamily="@font/drawn"
+        android:textSize="26sp"
+        android:text="Layer Effects" />
+
     <LinearLayout
         android:id="@+id/effectsListView"
         android:layout_height="wrap_content"

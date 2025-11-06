@@ -31,8 +31,8 @@ import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.Layer
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
+import com.example.drawit.ui.effectpopups.EffectEditDialog
 import com.google.android.material.button.MaterialButton
-//import top.defaults.colorpicker.ColorPickerPopup
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -117,7 +117,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         binding.toolbar.addOnLayoutChangeListener(relayoutListener)
         binding.gridBackground.addOnLayoutChangeListener(relayoutListener)
 
-        // on new painting click show a custom rendered popup
+        // on pause painting click show pause popup
         findViewById<Button>(R.id.pausePainting).setOnClickListener {
             val dialogBinding = DialogPausePaintingBinding.inflate(layoutInflater)
 
@@ -266,18 +266,28 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             dialog.dismiss()
         }
 
-        if (layer.effects.isNotEmpty()) {
+        if (layer.effectBindings.isNotEmpty()) {
             dialogBinding.noEffectsAddedText.height = 0
 
-            for (effect in layer.effects) {
+            for (effectBinding in layer.effectBindings) {
                 val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
+                val effect = (application as DrawItApplication).effectManager.getEffect(effectBinding.key)!!
 
                 effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
                 effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
 
                 effectItem.root.setOnClickListener {
-                    // todo: push to layer edit
-                    //       rn what's to do is effect edit/new layout
+                    // close available dialog, open edit dialog
+                    dialog.dismiss()
+
+                    EffectEditDialog(this, layer, effect, onEffectRemoved = {
+                        // refresh effect list since each layer can have one of each effect type
+                        // we need to update available effects list to add current effect back
+                        openAddedEffectsDialog()
+                    }, onEffectEditClose = {
+                        // reopen added effects dialog on edit close
+                        openAddedEffectsDialog()
+                    }).show()
                     //       and then layer serialization and backend (prob firebase)
                     //       and then lastly one draft save/load system locally
                 }
@@ -300,26 +310,54 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             .setView(dialogBinding.root)
             .create()
 
+        val activeLayer = canvasManager.getLayer(canvasManager.getActiveLayerIndex())!!
+
         dialogBinding.closeNewEffectsDialog.setOnClickListener {
             dialog.dismiss()
             openAddedEffectsDialog()
         }
 
-        val effects = (application as DrawItApplication).effectManager.getEffects()
+        val selectableEffects = (application as DrawItApplication).effectManager.getEffects().filter { effect -> !activeLayer.effectBindings.containsKey(effect.getEffectType()) }
 
-        if (effects.isNotEmpty()) {
+        if (selectableEffects.isNotEmpty()) {
             dialogBinding.noEffectText.height = 0
 
             // dialogBinding.effectsListView
             // push new effect layout to list
-            for (effect in effects) {
+            for (selectableEffect in selectableEffects) {
+                // one binding for each effect
+                if (activeLayer.effectBindings.containsKey(selectableEffect.getEffectType())) {
+                    continue
+                }
+
                 val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
 
-                effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
-                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
+                effectItem.root.findViewById<TextView>(R.id.effectName).text = selectableEffect.getEffectName()
+                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = selectableEffect.getEffectDescription()
 
                 effectItem.root.setOnClickListener {
-                    // todo: push to new effect view
+                    // dismiss selection dialog
+                    dialog.dismiss()
+
+                    // added anyways, remove from selectable list
+                    // listener handles when effect is deleted to put it back in the list
+                    dialogBinding.effectsListView.removeView(effectItem.root)
+
+                    // create new binding in layer
+                    activeLayer.addEffectBinding(selectableEffect)
+                    // we can pass effects as references because
+                    // we're not directly modifying them
+                    // we're creating a "middleware" type of binding system in layers
+                    // so for each added effect there exists a key (effect sensor type)
+                    // and a list of LayerEffectBindings
+
+                    EffectEditDialog(this, activeLayer, selectableEffect, onEffectRemoved = {
+                        // refresh effect selection list
+                        openEffectSelectionDialog()
+                    }, onEffectEditClose = {
+                        // reopen added effects dialog on edit close
+                        openEffectSelectionDialog()
+                    }).show()
                 }
 
                 dialogBinding.effectsListView.addView(effectItem.root)

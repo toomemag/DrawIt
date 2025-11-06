@@ -13,6 +13,19 @@ enum class LayerTransformInput {
     SCALE
 }
 
+// for effect bindings
+// map effect to some interface
+// what does the interface need
+// masked effect input, eg, transform [ x, y, z ] to [ null, LayerTransformInput, null ]
+// on effect input add, default to whatever the first option is
+// now when thinking of it might be better to just use index :rofl:
+// cant have multiple mappings in one anyway
+// mapped from effect to binding in layer
+data class LayerEffectBinding(
+    var effectInputIndex: Int,
+    var layerTransformInput: LayerTransformInput,
+)
+
 // debug name more than anything
 class Layer(var name: String = "Layer") {
     var bitmap: Bitmap = createBitmap(128, 128)
@@ -20,9 +33,7 @@ class Layer(var name: String = "Layer") {
     var isActive: Boolean = true
     var offset: Array<Int> = arrayOf(0, 0)
 
-    val effects: MutableList<BaseEffect<*>> = mutableListOf()
-
-
+    val effectBindings: MutableMap<Int, MutableList<LayerEffectBinding>> = mutableMapOf()
 
     var paint = android.graphics.Paint().apply {
         isAntiAlias = false
@@ -38,14 +49,21 @@ class Layer(var name: String = "Layer") {
         canvas.drawBitmap(bitmap, null, rect, paint)
     }
 
-    fun addEffect(effect: BaseEffect<*>) {
-        effects.plus(effect)
+    fun addEffectBinding(effect: BaseEffect<*>) {
+        // make new list if none exists
+        effectBindings.putIfAbsent(effect.getEffectType(), mutableListOf())
     }
 
-    fun removeEffect(effect: BaseEffect<*>) {
-        // each layer can have only one of each effect type
-        val idx = effects.indexOfFirst { it.getEffectType() == effect.getEffectType() }
-        if (idx >= 0) effects.removeAt(idx)
+    fun getEffectBindings(effect: BaseEffect<*>): MutableList<LayerEffectBinding> {
+        if (!effectBindings.containsKey(effect.getEffectType())) {
+            throw IllegalArgumentException("Effect not bound to layer")
+        }
+
+        return effectBindings[effect.getEffectType()]!!
+    }
+
+    fun removeEffectBinding(effect: BaseEffect<*>) {
+        effectBindings.remove(effect.getEffectType())
     }
 
     // todo: in the future could add relative scaling or set px transform
