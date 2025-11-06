@@ -31,7 +31,7 @@ import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.Layer
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
-import com.example.drawit.ui.effectpopups.EffectEditDialog
+import com.example.drawit.ui.effects.EffectEditDialog
 import com.google.android.material.button.MaterialButton
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
@@ -44,6 +44,18 @@ enum class CanvasGestureState {
     GESTURE
 }
 
+/**
+ * Main painting activity
+ *
+ * @property binding The view binding for the activity
+ * @property canvasManager The manager for handling canvas layers and drawing
+ * @property lastTouchMidPoint The last midpoint of touch events for gesture handling
+ * @property firstTouchDistance The initial distance between touch points for gesture handling
+ * @property canvasOffset The current offset of the canvas for panning
+ * @property drawingState The current state of canvas gestures (idle, painting, or gesture)
+ * @property lastCanvasDrawPoint The last point drawn on the canvas for interpolation
+ * @property effectContext The context for managing sensor-based effects
+ */
 class PaintingActivity : AppCompatActivity(), SensorEventListener {
     // binding for activity_painting.xml
     private lateinit var binding: ActivityPaintingBinding
@@ -56,8 +68,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
     private var firstTouchDistance: Float = 0f
     private var canvasOffset: Array<Float> = arrayOf(0f, 0f)
 
-    // frames arent consistent, if we move a finger along the canvas
-    // some pixels in between get skipped -> need to track last drawn point
     private var drawingState: CanvasGestureState = CanvasGestureState.IDLE
 
     // stored as pixel pos
@@ -78,6 +88,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         binding.titleText.text = if (mode == "daily_theme") "Theme" else "Freemode"
 
         effectContext = (application as DrawItApplication).effectManager.createContext()
+
+        // todo: add/remove context event listeners on layer effect add/remove
         effectContext.addSensorListener<GyroscopeEffect>(Sensor.TYPE_GYROSCOPE) { effect, sensorEvent ->
             val ret = effect.translateSensorEvent(sensorEvent)
 
@@ -252,6 +264,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    /**
+     * Open dialog showing added effects on current layer
+     */
     private fun openAddedEffectsDialog() {
         // no layer no effects
         if (canvasManager.getActiveLayerIndex() == -1) return
@@ -304,6 +319,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         dialog.show()
     }
 
+    /**
+     * Open dialog for selecting new effect to add to current layer
+     */
     private fun openEffectSelectionDialog() {
         val dialogBinding = DialogNewEffectBinding.inflate(layoutInflater)
         val dialog = MaterialAlertDialogBuilder(this)
@@ -367,16 +385,29 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         dialog.show()
     }
 
+    /**
+     * Register sensor listeners on resume, method required by SensorEventListener
+     */
     override fun onResume() {
         super.onResume()
         effectContext.registerSensorListeners(this)
     }
 
+    /**
+     * Unregister sensor listeners on pause, method required by SensorEventListener
+     */
     override fun onPause() {
         super.onPause()
         effectContext.unregisterSensorListeners(this)
     }
 
+    /**
+     * Convert canvas touch position to bitmap paint position
+     * @param layer The layer to get the bitmap from
+     * @param x The x position on the canvas
+     * @param y The y position on the canvas
+     * @return The x and y position on the bitmap as an array
+     */
     private fun getBitmapPaintPosFromCanvas(layer: Layer, x: Float, y: Float): Array<Int> {
         val viewW = binding.canvas.width.toFloat().coerceAtLeast(1f)
         val viewH = binding.canvas.height.toFloat().coerceAtLeast(1f)
@@ -393,12 +424,19 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         return arrayOf(x, y)
     }
 
+    /**
+     * Handle painting on the active layer
+     * @param v The canvas view
+     * @param event The motion event
+     * @return True if the paint action was handled, false otherwise
+     */
     private fun onLayerPaint(v: CanvasView, event: MotionEvent): Boolean {
         val activeIndex = canvasManager.getActiveLayerIndex()
         val layer = canvasManager.getLayer(activeIndex)
 
         if (layer == null) {
             // no active layer selected
+            // todo: show toast? title should 100% only stay as theme
             binding.titleText.text = "No active layer"
             // report click
             v.performClick()
@@ -421,6 +459,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 // x or y axis
                 val steps = max(distX, distY)
 
+                // frames arent consistent, if we move a finger along the canvas
+                // some pixels in between get skipped -> need to track last drawn point
                 for (i in 1..steps) {
                     val t = i.toFloat() / steps.toFloat()
                     val interpX = (lastX + t * (x - lastX)).toInt()
@@ -440,7 +480,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // layers row update
+    /**
+     * Sync the canvas layers on the bottom to the layer preview views
+     */
     private fun syncLayersToView() {
         // todo: could separate into addNewLayer and refreshLayers
         // right now clearing all older views and think this is performance overhead
@@ -544,6 +586,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         updateCanvasLayers()
     }
 
+    /**
+     * Update the canvas view with the current layers from the canvas manager
+     */
     private fun updateCanvasLayers() {
         binding.canvas.apply {
             layers = canvasManager.getLayers().reversed()
@@ -552,18 +597,23 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     // canvas resizing and moving
+    /**
+     * Handle touch events for canvas gestures (panning and zooming)
+     * @param event The motion event
+     * @return True if the event was handled, false otherwise
+     *
+     * @desc 2 bugs!
+     *       - zoom freaks out if too zoomed in (i guess upper bound is hit?)
+     *       - ACTION_POINTER_DOWN isn't called when 2nd finger lands
+     */
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // todo: canvas doesnt get moved or scaled
         if (event.pointerCount < 2) {
             super.onTouchEvent(event)
             return true
         }
 
-        // bug: zoom freaks  out if too zoomed in (i guess upper bound is hit?)
-        // bug: ACTION_POINTER_DOWN isn't called when 2nd finger lands
-
         when ( event.actionMasked ) {
-            MotionEvent.ACTION_POINTER_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
+            MotionEvent.ACTION_POINTER_DOWN -> {
                 // on press ( aka event down) we want to store the initial
                 // touch position
 
@@ -616,16 +666,33 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         return super.onTouchEvent(event)
     }
 
-    // sensor events
+    /**
+     * Handle sensor change events, method required by SensorEventListener
+     * @param sensorEvent The sensor event
+     *
+     * @desc Delegates the sensor event to the effect context for processing.
+     */
     override fun onSensorChanged(sensorEvent: SensorEvent) {
         effectContext.onSensorChanged(sensorEvent)
     }
 
+    /**
+     * Handle sensor accuracy changes, method required by SensorEventListener
+     * @param sensor The sensor
+     * @param accuracy The new accuracy
+     *
+     * @desc unused method from SensorEventListener interface
+     */
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // from SensorEventListener, don't need it i think
     }
 
-    // grid background update
+    /**
+     * Update the overlay gradient stops on the grid background
+     *
+     * @desc Calculates the positions of the title bar and toolbar relative to the grid background
+     *       and updates the gradient overlay stops accordingly to ensure proper rendering.
+     */
     private fun updateOverlayStops() {
         // get positions to draw gradient (hides grid) correctly
         val gridLoc = IntArray(2)

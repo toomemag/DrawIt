@@ -6,51 +6,74 @@ import android.hardware.SensorEvent
 // each class can have a different return value
 // for example gyro has a vector (xyz,pyr)
 // light has just a float/int (idk havent delve into docs that deep yet)
+/**
+ * Base effect class, to be extended by all effect classes
+ * @param T The type of the effect's output values
+ * @param sensor The sensor associated with the effect
+ * @param name The name of the effect
+ * @param description A brief description of the effect
+ * @param inputOptions A list of input options available for the effect
+ *
+ * @desc Each effect is global and managed by the EffectManager. Paintings can request
+ *       linked effects from the EffectManager to apply transformations based on sensor data.
+ */
 abstract class BaseEffect<T>(
     protected var sensor: Sensor,
     protected var name: String,
     protected var description: String,
     protected var inputOptions: List<String>
 ) {
-    // what do we need for effects
-    // initial idea was to have a mapping input -> output
-    // so, each effect is global, lives under effectmanager
-    // from there, paintings can ask linked effects for their effect object from effectmanager
-    // and do their business
-
-    // each sensor has a different values field output from their event
-    // these middleware classes translate them
-    // eventlisteners have to be set up in views though, since I think that's
-    // the only context we can listen for sensor updates
+    /**
+     * Translate a SensorEvent into a list of effect output values
+     * @param sensorEvent The SensorEvent to translate
+     * @return A list of translated effect output values
+     */
     abstract fun translateSensorEvent(sensorEvent: SensorEvent): List<T>
-    // translate input based on translated sensor values
-    abstract fun transformInput(inputValues: List<T>): List<T>
+
+    /**
+     * Transform an input value based on the effect's translated sensor values
+     * @param index The index of the effect output value to use for transformation
+     * @param toTransform The input value to transform
+     * @return The transformed input value
+     */
+    abstract fun transformInput(index: Int, toTransform: T): T
+
+    /**
+     * Reset the effect's internal state
+     */
     abstract fun reset()
 
-    // we need a way to get layer inputs to map to layer outputs (xy, scale, rotation, have to think what else)
-    // for eg gyroscope we have xyz rotation values
-    // layer should store all data about its' effects
-    // we only deal with ""raw"" data in effect classes meaning simple input -> output mapping
-    // what we do need is to let the layer know what inputs are available
+    /**
+     * Get the list of effect input options
+     * @return A list of effect input option names
+     *
+     * @desc We need a way to get layer inputs to map to layer outputs (xy, scale, rotation, etc.).
+     *       More importantly we need to let the UI know what inputs are available for binding.
+     */
     fun getEffectInputOptions(): List<String> {
         return inputOptions
     }
-    // when an effect input, eg. gyro.yaw is applied to layer.x, all others not set
-    // we need to pass [null, inputValue, null] to <something> to get the output parameter we want to modify
-    // this means layers would need transform functions for each applied effect (but how can we implement that, input types vary)
 
-    // what if we return sensor values all in an array, so layers can filter out what they want based on a bitmask
-    // eg input options returns [Int], layer uses [true]... grr won't help, layer should just map, masking is useless and
-    // introduces unnecessary complexity imo
-
+    /**
+     * Get the name of the effect
+     * @return The effect's name
+     */
     fun getEffectName(): String {
         return name
     }
 
+    /**
+     * Get the description of the effect
+     * @return The effect's description
+     */
     fun getEffectDescription(): String {
         return description
     }
 
+    /**
+     * Get the sensor type associated with the effect
+     * @return The sensor type
+     */
     fun getEffectType(): Int {
         return sensor.type
     }

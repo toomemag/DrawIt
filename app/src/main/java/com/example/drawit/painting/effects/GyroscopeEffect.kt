@@ -3,11 +3,10 @@ package com.example.drawit.painting.effects
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 
-data class Vector(
-    var x: Float = 0f,
-    var y: Float = 0f,
-    var z: Float = 0f
-)
+/**
+ * Gyroscope effect class, extends BaseEffect
+ * Translates gyroscope sensor events into cumulative pitch, yaw, roll values
+ */
 
 // https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/
 // "Instructs the Kotlin compiler to generate overloads for this function that substitute default parameter values."
@@ -20,6 +19,18 @@ class GyroscopeEffect @JvmOverloads constructor(
 ) : BaseEffect<Float>(sensor, name, description, inputOptions) {
     private val ret: MutableList<Float> = mutableListOf(0f, 0f, 0f)
 
+    /**
+     * Translate sensor event into cumulative pitch, yaw, roll values
+     * @param sensorEvent The sensor event to translate
+     * @return A list of cumulative pitch, yaw, roll values
+     *
+     * @desc This method takes a gyroscope sensor event and updates the cumulative pitch, yaw, and
+     *       roll values by adding the angular velocities from the sensor event to the existing values.
+     *       It returns the updated list of cumulative values.
+     *
+     * @note This needs to be called every event before translations, as the return
+     *       values would be stale otherwise in transformInput.
+     */
     override fun translateSensorEvent(sensorEvent: SensorEvent): List<Float> {
         val velX = sensorEvent.values[0]
         val velY = sensorEvent.values[1]
@@ -32,25 +43,15 @@ class GyroscopeEffect @JvmOverloads constructor(
         return ret
     }
 
-    override fun transformInput(inputValues: List<Float>): List<Float> {
-        val outputValues: MutableList<Float> = mutableListOf(0f, 0f, 0f)
-
-        for (i in ret.indices) {
-            // if we have null in list means its masked out
-            if (inputValues[i] == null) continue
-
-            // todo: right now we're setting strict values, in the future we schould have either
-            //       relative
-            //          - need to add customizable scale, eg coerce gyrosensor output -90 to 90, scale for 90
-            //            eg for layer pos should be pos.x = width * coercedValue / scale
-            //       or absolute
-            //          - same example, pos.x = mutableValue
-            //            mutable because we should still be able to scale the raw sensor return value
-            //            by an arbitrary factor
-            outputValues[i] = ret[i]
-        }
-
-        return outputValues.toList()
+    /**
+     * Transform input based on cumulative pitch, yaw, roll values
+     * @param index The index of the input to transform (0: Pitch, 1: Yaw, 2: Roll)
+     * @param toTransform The value to transform
+     * @return The transformed value
+     */
+    override fun transformInput(index: Int, toTransform: Float): Float {
+        // todo add scaling/px etc
+        return ret[index]
     }
 
     override fun reset() {

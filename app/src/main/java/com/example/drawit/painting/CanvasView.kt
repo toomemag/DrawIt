@@ -6,15 +6,33 @@ import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
 
+/**
+ * Custom view for rendering a canvas with multiple layers. Each layer can have
+ *  its own bitmap and offset. Inactive layers are drawn with reduced opacity.
+ *
+ * @param context The context of the view
+ * @param attrs The attribute set for the view
+ *
+ * @property layers The list of layers to be drawn on the canvas
+ * @property paint The paint object used for drawing
+ * @property bitmapScaleRect The rectangle used for scaling bitmaps to fit the view
+ */
 class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
     var layers: List<Layer> = emptyList()
+
+    // pixel art style
     var paint = android.graphics.Paint().apply {
-        // blurry otherwise
         isAntiAlias = false
         isFilterBitmap = false
     }
     private val bitmapScaleRect = Rect()
 
+    /**
+     * Draws the layers onto the canvas. Active layers are drawn with full opacity,
+     *  while inactive layers are drawn with reduced opacity.
+     *
+     * @param canvas The canvas to draw on
+     */
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
@@ -40,11 +58,20 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
         }
     }
 
+    /**
+     * Invalidates the view, causing it to be redrawn.
+     */
     fun invalidateLayers() {
         invalidate()
     }
 
+    /**
+     * Handles click events on the view.
+     * @return true to indicate the click was handled
+     */
     override fun performClick(): Boolean {
+        // todo: think we could move some click handling logic from PaintingActivity here later
+        //       have to see as we have some state management in PaintingActivity
         super.performClick()
         return true
     }

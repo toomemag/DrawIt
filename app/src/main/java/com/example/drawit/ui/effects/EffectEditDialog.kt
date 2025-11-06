@@ -1,4 +1,4 @@
-package com.example.drawit.ui.effectpopups
+package com.example.drawit.ui.effects
 
 import android.app.Activity
 import android.graphics.Typeface
@@ -13,9 +13,20 @@ import com.example.drawit.painting.effects.BaseEffect
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * Wrapper class for creating new effect edit
+ * Wrapper class for creating new effect edit dialog
+ *
+ * @param activity The activity context to use for building views
+ * @param layer Context for which layer we're editing an effect for
+ * @param effect Context for which effect we are adding transforms to layer
+ * @param onEffectRemoved Callback function for parents
+ * @param onEffectEditClose Callback function for parents
+ *
+ * @property effectsContainer Main list where effect transforms are appended to
+ * @property innerPadding temp var
+ * @property dialogPadding temp var
+ * @property titleFontSize temp var
+ * @property descFontSize temp var
  */
-
 class EffectEditDialog(
     private val activity: Activity,
     private val layer: Layer,
@@ -38,6 +49,9 @@ class EffectEditDialog(
     private val titleFontSize = 26 // sp
     private val descFontSize = 16 // sp
 
+    /**
+     * Called to show the edit dialog for given effect in a layer
+     */
     fun show() {
         // todo: unless it's possible to mimic the style as in other popups, might aswell ditch this diea
         val scale = activity.resources.displayMetrics.density
@@ -113,10 +127,8 @@ class EffectEditDialog(
         // we can get what input option is selected from mask
         // eg. effect returns [ x, y, z ], mask is set as [ val, null, null ]
         // => x is selected input option
-        // todo: have to think how we indicate what it's bound to, probably enum?
         // and new button for adding new binding
 
-        // todo: temp to test
         updateEffectBindingsView()
 
         val addNewBinding = android.widget.Button(activity).apply {
@@ -176,30 +188,23 @@ class EffectEditDialog(
         dialog.show()
     }
 
+    /**
+     * Updates effect bindings (the reason effectBindings is a member var)
+     */
     private fun updateEffectBindingsView() {
         effectsContainer.removeAllViews()
 
         val effectBindings = layer.getEffectBindings(effect)
 
-        val scale = activity.resources.displayMetrics.density
-        val dialogPaddingPx = (dialogPadding * scale + 0.5f).toInt()
-
-        val typeface: Typeface? = try {
-            ResourcesCompat.getFont(activity, R.font.drawn)
-        } catch (e: Exception) {
-            null
-        }
-
         if (effectBindings.isNotEmpty()) {
             for (effectBinding in effectBindings) {
-                val bindingText = android.widget.TextView(activity).apply {
-                    text = "Input: ${effect.getEffectInputOptions()[effectBinding.effectInputIndex]} -> Layer: ${effectBinding.layerTransformInput}"
-                    textSize = descFontSize.toFloat()
-                    setPadding(0, 0, 0, dialogPaddingPx / 2)
-                    setTypeface(typeface)
-                }
+                val bindingListItem = EffectBindingListItem(
+                    activity,
+                    effect,
+                    effectBinding
+                ).build()
 
-                effectsContainer.addView(bindingText)
+                effectsContainer.addView(bindingListItem)
             }
         }
     }
