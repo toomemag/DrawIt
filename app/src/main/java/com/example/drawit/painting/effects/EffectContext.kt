@@ -19,17 +19,16 @@ class EffectContext(
      * Adds a sensor listener for a specific sensor type and effect type
      * @param sensorType The sensor type to listen for
      * @param listener The listener function to call when the sensor event occurs
-     * @param E The effect type to enforce
      *
      * @note reified type parameter E is used to enforce the effect type at runtime
      */
-    inline fun <reified E : BaseEffect<*>> addSensorListener(sensorType: Int, crossinline listener: (E, sensorEvent: SensorEvent) -> Unit) {
+    inline fun addSensorListener(sensorType: Int, crossinline listener: (BaseEffect<*>, sensorEvent: SensorEvent) -> Unit) {
         val listeners = sensorListeners.getOrPut(sensorType) { mutableListOf() }
+        android.util.Log.d("EffectContext", "addSensorListener registering event listener for sensor type $sensorType")
+
         listeners.add { baseEffect, sensorEventFromListener ->
             // enforce sensor type
-            if (baseEffect is E) {
-                listener(baseEffect, sensorEventFromListener)
-            }
+            listener(baseEffect, sensorEventFromListener)
         }
     }
 
@@ -83,6 +82,15 @@ class EffectContext(
             } else {
                 android.util.Log.w("EffectContext", "registerSensorListeners - no sensor found for type $sensorType")
             }
+        }
+    }
+
+    /**
+     * Unregisters all sensor listeners from the SensorManager
+     */
+    fun removeAllSensorListeners() {
+        for (key in sensorListeners.keys) {
+            sensorListeners.remove(key)
         }
     }
 

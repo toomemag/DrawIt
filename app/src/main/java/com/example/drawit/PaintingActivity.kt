@@ -29,6 +29,8 @@ import kotlin.math.abs
 import kotlin.math.max
 import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.Layer
+import com.example.drawit.painting.LayerTransformInput
+import com.example.drawit.painting.effects.BaseEffect
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
 import com.example.drawit.ui.effects.EffectEditDialog
@@ -88,18 +90,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         binding.titleText.text = if (mode == "daily_theme") "Theme" else "Freemode"
 
         effectContext = (application as DrawItApplication).effectManager.createContext()
-
-        // todo: add/remove context event listeners on layer effect add/remove
-        effectContext.addSensorListener<GyroscopeEffect>(Sensor.TYPE_GYROSCOPE) { effect, sensorEvent ->
-            val ret = effect.translateSensorEvent(sensorEvent)
-
-            val layers = canvasManager.getLayers()
-
-            if (layers.size > 1 && canvasManager.getActiveLayerIndex() == -1) {
-                layers[0].setPos(ret[1].toInt().coerceIn(-60, 60), ret[0].toInt().coerceIn(-60, 60))
-                updateCanvasLayers()
-            }
-        }
 
         // titlebar would be below the phone's status bar, so add padding to compensate
         val originalTitlebarPaddingTop = binding.titlebar.paddingTop
@@ -540,6 +530,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     if (index != -1) {
                         // bug: can click between layers and that selects no layer
                         if (index != activeIndex) {
+                            // no sensor events! we're not in preview mode
+                            onPause()
+
                             // if we had no layer selected before -> in preview mode
                             // if we switch from preview to active layer (edit mode)
                             // layer pos offsets from event listeners stay
@@ -553,10 +546,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                         } else {
                             canvasManager.setActiveLayer(-1)
 
-                            // reset sensor data
-                            // for gyro sets all pos fields to 0, otherwise phone rotation will
-                            // be carried over preview switches
-                            effectContext.resetAllEffects()
+                            // update all layers and their effects
+                            updateAllLayerEffects()
                         }
 
                         // update drawing area, if we switch layers without this here
@@ -710,5 +701,82 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         val start = titlebarBottomY.coerceIn(0, binding.gridBackground.height)
         val end = toolbarTopY.coerceIn(start, binding.gridBackground.height)
         binding.gridBackground.updateOverlayStops(start, end)
+    }
+
+    /**
+     * Update all layer effects, called when no layer is selected
+     */
+    private fun updateAllLayerEffects() {
+        // 1. reset effect states
+        effectContext.resetAllEffects()
+
+        // 2. remove old listeners
+        effectContext.removeAllSensorListeners()
+
+        // 3. get all layer effects
+        val effectsToListen = mutableSetOf<Int>()
+
+        val layers = canvasManager.getLayers()
+        for (layer in layers) {
+            for (effectBinding in layer.effectBindings) {
+                val effectType = effectBinding.key
+                effectsToListen.add(effectType)
+            }
+        }
+
+        android.util.Log.d("EffectContext", "updateAllLayerEffects - effects to listen for: $effectsToListen")
+
+        // 4. register all effects
+        for (sensorType in effectsToListen) {
+            val effect = (application as DrawItApplication).effectManager.getEffect(sensorType)
+            if (effect != null) {
+                android.util.Log.d("EffectContext", "updateAllLayerEffects - adding listener for: ${effect.getEffectName()}")
+                // we need to add listeners to each effect
+                effectContext.addSensorListener(effect.getEffectType()) { effect, sensorEvent ->
+                    // first update the sensor inner value to use
+                    // in transform
+                    effect.translateSensorEvent(sensorEvent)
+
+                    for (layer in layers) {
+                        val bindings = layer.effectBindings[effect.getEffectType()] ?: continue
+
+                        val layerAppliedTransforms = mutableSetOf<LayerTransformInput>()
+
+                        // ok we have a binding
+                        for (layerEffectBinding in bindings) {
+                            // i hope I can find a cleaner/dynamic casting way
+                            val hasAppliedTransform = layerAppliedTransforms.contains(layerEffectBinding.layerTransformInput)
+                            when (effect) {
+                                is GyroscopeEffect -> {
+                                    val t = effect.getTransformInput(
+                                        layerEffectBinding.effectInputIndex
+                                    )
+
+                                    layer.applyEffectTranslation(t, layerEffectBinding.layerTransformInput, hasAppliedTransform)
+                                }
+                                else -> {
+                                    @Suppress("UNCHECKED_CAST")
+                                    val t = (effect as BaseEffect<Int>).getTransformInput(
+                                        layerEffectBinding.effectInputIndex
+                                    )
+
+                                    layer.applyEffectTranslation(t, layerEffectBinding.layerTransformInput, hasAppliedTransform)
+                                }
+                            }
+
+                            layerAppliedTransforms.add(layerEffectBinding.layerTransformInput)
+                        }
+                    }
+
+                    // update canvas when listener is done
+                    updateCanvasLayers()
+                }
+            } else {
+                android.util.Log.w("EffectContext", "updateAllLayerEffects - no effect found for sensor type $sensorType")
+            }
+        }
+
+        // re-register listeners
+        onResume()
     }
 }

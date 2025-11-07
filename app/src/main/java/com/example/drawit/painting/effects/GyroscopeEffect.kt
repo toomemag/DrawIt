@@ -46,10 +46,9 @@ class GyroscopeEffect @JvmOverloads constructor(
     /**
      * Transform input based on cumulative pitch, yaw, roll values
      * @param index The index of the input to transform (0: Pitch, 1: Yaw, 2: Roll)
-     * @param toTransform The value to transform
      * @return The transformed value
      */
-    override fun transformInput(index: Int, toTransform: Float): Float {
+    override fun getTransformInput(index: Int): Float {
         // todo add scaling/px etc
         return ret[index]
     }

@@ -33,10 +33,9 @@ abstract class BaseEffect<T>(
     /**
      * Transform an input value based on the effect's translated sensor values
      * @param index The index of the effect output value to use for transformation
-     * @param toTransform The input value to transform
      * @return The transformed input value
      */
-    abstract fun transformInput(index: Int, toTransform: T): T
+    abstract fun getTransformInput(index: Int): T
 
     /**
      * Reset the effect's internal state

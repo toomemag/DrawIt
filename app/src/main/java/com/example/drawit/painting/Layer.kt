@@ -104,4 +104,31 @@ class Layer(var name: String = "Layer") {
     fun removeEffectBinding(effect: BaseEffect<*>) {
         effectBindings.remove(effect.getEffectType())
     }
+
+    /**
+     * Applies the effect translation to the layer based on the given input mode
+     * @param inputMode The layer transform input mode to apply, eg pos, size etc
+     */
+    fun <EffectTransformReturn>applyEffectTranslation(effectTransformResult: EffectTransformReturn, inputMode: LayerTransformInput, accumulate: Boolean = false) {
+        when(inputMode) {
+            LayerTransformInput.X_POS -> {
+                // todo: better types :sob:
+                val transformed = (effectTransformResult as Float).toInt()
+                if ( !accumulate )
+                    offset[0] = transformed
+                else
+                    offset[0] += transformed
+            }
+            LayerTransformInput.Y_POS -> {
+                val transformed = (effectTransformResult as Float).toInt()
+                if ( !accumulate )
+                    offset[1] = transformed
+                else
+                    offset[1] += transformed
+            }
+            else -> {
+                // other input modes not implemented yet
+            }
+        }
+    }
 }
