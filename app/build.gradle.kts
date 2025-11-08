@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -39,6 +40,9 @@ android {
 }
 
 dependencies {
+    // https://firebase.google.com/docs/storage/android/start
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -53,16 +57,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // colorpicker lib from https://github.com/duanhong169/ColorPicker
-    // colorpicker deps
-    // "java.lang.ClassNotFoundException: Didn't find class "android.support.constraint.ConstraintLayout""
-    // need to add the deprecated constraintlayout lib
-    //implementation(libs.constraintlayoutdeprecated)
-    //implementation(libs.checkerboarddrawable)
+    // color picker lib
     implementation(libs.colorpicker)
 
     // gson for json parsing
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-}
 
+    // firebase
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+}

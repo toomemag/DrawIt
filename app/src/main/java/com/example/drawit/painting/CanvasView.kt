@@ -25,7 +25,32 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
         isAntiAlias = false
         isFilterBitmap = false
     }
+
     private val bitmapScaleRect = Rect()
+
+    /* unless i find a cleaner way to show the grid, won't be added
+        maybe only show it if the zoom is over a certain threshold,
+        kind of like figma does it?
+        also probably doing it as a shader is quite a lot more performant :rofl:
+
+    private val baseGridSize = 2048
+    private var guidelineGrid: Bitmap = createBitmap(baseGridSize, baseGridSize);
+
+    init {
+        // 128x128 layers, could do a global layer size later, wouldn't need to hardcode size
+        val everyNPixel = baseGridSize / 128
+
+        for (y in 0..< baseGridSize) {
+            for (x in 0 ..< baseGridSize) {
+                if (y % everyNPixel == 0 || x % everyNPixel == 0) {
+                    guidelineGrid.setPixel(x, y, 0x20FFFFFF)
+                } else {
+                    guidelineGrid.setPixel(x, y, Color.BLACK)
+                }
+            }
+        }
+    }*/
+
 
     /**
      * Draws the layers onto the canvas. Active layers are drawn with full opacity,
@@ -37,7 +62,9 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
         super.onDraw(canvas)
 
         // scale bitmap to fill the view size
-        bitmapScaleRect.set(0, 0, 0, 0)
+        bitmapScaleRect.set(0, 0, width, height)
+
+        // canvas.drawBitmap(guidelineGrid, null, bitmapScaleRect, paint)
 
         val anySelected = layers.stream().anyMatch { layer -> layer.isActive }
         val globalAlpha = if (!anySelected) 255 else 55

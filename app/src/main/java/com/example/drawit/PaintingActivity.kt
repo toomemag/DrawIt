@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.hypot
 import androidx.core.graphics.set
 import com.example.drawit.databinding.DialogAddedEffectsBinding
+import com.example.drawit.databinding.DialogConfirmPaintingSubmitBinding
 import com.example.drawit.databinding.DialogNewEffectBinding
 import com.example.drawit.databinding.NodeEffectBinding
 import com.example.drawit.painting.CanvasManager
@@ -35,9 +36,13 @@ import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
 import com.example.drawit.ui.effects.EffectEditDialog
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import java.util.Timer
+import java.util.TimerTask
 
 
 enum class CanvasGestureState {
@@ -75,6 +80,26 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
     // stored as pixel pos
     private var lastCanvasDrawPoint: Array<Int> = arrayOf(0, 0)
     private lateinit var effectContext: EffectContext
+
+    private var startTime: Long = System.currentTimeMillis()
+    private var lastPausedTime: Long = 0L
+
+    private fun isPaused(): Boolean {
+        return lastPausedTime != 0L
+    }
+
+    private fun pausePaintingTimer() {
+        lastPausedTime = System.currentTimeMillis()
+    }
+
+    private fun resumePaintingTimer() {
+        // don't count paused time towards total time
+        if (isPaused()) {
+            val pausedTime = System.currentTimeMillis() - lastPausedTime
+            startTime += pausedTime
+            lastPausedTime = 0L
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -121,28 +146,72 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
         // on pause painting click show pause popup
         findViewById<Button>(R.id.pausePainting).setOnClickListener {
-            val dialogBinding = DialogPausePaintingBinding.inflate(layoutInflater)
+            val pauseDialogBinding = DialogPausePaintingBinding.inflate(layoutInflater)
 
             val dialog = MaterialAlertDialogBuilder(this)
-                .setView(dialogBinding.root)
+                .setView(pauseDialogBinding.root)
                 .create()
 
             // button listeners
-            dialogBinding.ActivePaintingContinue.setOnClickListener {
+            pauseDialogBinding.ActivePaintingContinue.setOnClickListener {
+                // back to painting
                 dialog.dismiss()
+
+                resumePaintingTimer()
             }
 
-            dialogBinding.ActivePaintingSaveExit.setOnClickListener {
+            pauseDialogBinding.ActivePaintingSaveExit.setOnClickListener {
                 // close activity
                 // todo: save painting
                 //       could implement a serializer in CanvasManager and store it locally
                 //       would be overriden when a new painting is saved and one exists
+                //
+                // todo: also autosaving, so 2 local saves (draft & autosave)
                 finish()
                 dialog.dismiss()
             }
 
             dialog.show()
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+            pausePaintingTimer()
+        }
+
+        // submit dialog
+        findViewById<MaterialButton>(R.id.submitPainting).setOnClickListener {
+            val sumbitDialogBinding = DialogConfirmPaintingSubmitBinding.inflate(layoutInflater)
+
+            val dialog = MaterialAlertDialogBuilder(this)
+                .setView(sumbitDialogBinding.root)
+                .create()
+
+            sumbitDialogBinding.SubmitPaintingSubmit.setOnClickListener {
+                val db = Firebase.firestore
+
+                // should always be paused though, dialog pauses anyway
+                val timeTakenSeconds = ((if (isPaused()) lastPausedTime - startTime else System.currentTimeMillis() - startTime) / 1000).toInt()
+
+                db.collection("paintings").add(
+                    canvasManager.serializeForFirebase(timeTakenSeconds)
+                ).addOnSuccessListener { dr ->
+                    android.util.Log.d("FirebaseDB", "DocumentSnapshot added with ID: ${dr.id}")
+                    // push back to mainactivity
+
+                    dialog.dismiss()
+                    finish()
+                }.addOnFailureListener { p0 ->
+                    android.util.Log.e("FirebaseDB", "Error adding document", p0)
+                }
+            }
+
+            sumbitDialogBinding.SubmitPaintingCancel.setOnClickListener {
+                dialog.dismiss()
+                resumePaintingTimer()
+            }
+
+            dialog.show()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            pausePaintingTimer()
         }
 
         findViewById<TextView>(R.id.newLayer).setOnClickListener {
@@ -252,6 +321,24 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
+
+        // update time taken
+        val timer = Timer( )
+        timer.scheduleAtFixedRate(object : TimerTask( ) {
+            override fun run( ) {
+                runOnUiThread {
+                    val timeSincePaused = if (isPaused()) System.currentTimeMillis() - lastPausedTime else 0L
+
+                    val currentTime = System.currentTimeMillis() - timeSincePaused
+                    val timeDiffSeconds = ( currentTime - startTime ) / 1000
+
+                    val minutes = timeDiffSeconds / 60
+                    val seconds = timeDiffSeconds % 60
+
+                    binding.titleTimer.text = String.format( "%d:%02d", minutes, seconds )
+                }
+            }
+        }, 0, 1000)
     }
 
     /**
@@ -594,7 +681,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
      * @return True if the event was handled, false otherwise
      *
      * @desc 2 bugs!
-     *       - zoom freaks out if too zoomed in (i guess upper bound is hit?)
      *       - ACTION_POINTER_DOWN isn't called when 2nd finger lands
      */
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -611,7 +697,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 firstTouchDistance = hypot(
                     (event.getX(1) - event.getX(0)).toDouble(),
                     (event.getY(1) - event.getY(0)).toDouble()
-                ).toFloat()
+                ).toFloat() * (1 / binding.canvasContainer.scaleX)
 
                 lastTouchMidPoint[0] = (event.getX(0) + event.getX(1)) / 2f
                 lastTouchMidPoint[1] = (event.getY(0) + event.getY(1)) / 2f
@@ -640,14 +726,15 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     (event.getY(1) - event.getY(0)).toDouble()
                 ).toFloat()
 
-                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 5f)
+                // use distance from initial zoom, not accumulative
+                // meaning if we take current zoom pos (eg 0.5x, first zoom pos 1x
+                //      where x represents some units between pointer 1 and 2, not the scale)
+                // new zoom = 0.5x = 1x / 0.5x
+                // first 0.5x, current 2x, new zoom 2x / 0.5x
+                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 8f)
 
-                // does scale scale about mid or posxy?
-                binding.canvasContainer.scaleX *= scaleFactor
-                binding.canvasContainer.scaleY *= scaleFactor
-
-                // reset for next move
-                firstTouchDistance = currentDistance
+                binding.canvasContainer.scaleX = scaleFactor
+                binding.canvasContainer.scaleY = scaleFactor
 
                 binding.canvasContainer.translationX = canvasOffset[0]
                 binding.canvasContainer.translationY = canvasOffset[1]

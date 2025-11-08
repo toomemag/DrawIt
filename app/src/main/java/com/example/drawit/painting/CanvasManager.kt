@@ -1,5 +1,9 @@
 package com.example.drawit.painting
 
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FieldValue
+
 enum class PaintTool {
     PEN, BRUSH, FILL, ERASER
 }
@@ -111,4 +115,16 @@ class CanvasManager {
      * @return The current paint color
      */
     fun getColor(): Int = paintColor
+
+    fun serializeForFirebase(timeTaken: Int): Map<String, Any> {
+        return mapOf(
+            "userId" to Firebase.auth.currentUser?.uid.toString(),
+            "timeTaken" to timeTaken,
+            "createdAt" to FieldValue.serverTimestamp(),
+            "size" to 128,
+            "theme" to "Theme<TODO>",
+            "mode" to "free_mode<TODO>",
+            "layers" to layers.map { layer -> layer.serializeForFirebase() }
+        )
+    }
 }

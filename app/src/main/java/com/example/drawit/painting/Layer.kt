@@ -3,6 +3,7 @@ package com.example.drawit.painting
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Rect
+import android.util.Base64
 import androidx.core.graphics.createBitmap
 import com.example.drawit.painting.effects.BaseEffect
 
@@ -130,5 +131,29 @@ class Layer(var name: String = "Layer") {
                 // other input modes not implemented yet
             }
         }
+    }
+
+    fun serializeForFirebase(): Map<String, Any> {
+        // serialize bitmap, make string of it, b64encode
+        val bytes = ByteArray(bitmap.byteCount)
+        bitmap.copyPixelsToBuffer(java.nio.ByteBuffer.wrap(bytes))
+        val b64bitmap = Base64.encode(bytes, Base64.DEFAULT).toString(Charsets.UTF_8)
+
+        val bindingsSerialized = mutableMapOf<String, Any>()
+        for ( (effectType, bindings) in effectBindings ) {
+            val bindingList = bindings.map { binding ->
+                mapOf(
+                    "effectInputIndex" to binding.effectInputIndex,
+                    "layerTransformInput" to binding.layerTransformInput.name
+                )
+            }
+            bindingsSerialized[effectType.toString()] = bindingList
+        }
+
+        return mapOf(
+            "bitmap" to b64bitmap,
+            // todo: if we add scaling later, would be nice if we had a separate serialization for bindings
+            "bindings" to bindingsSerialized,
+        )
     }
 }
