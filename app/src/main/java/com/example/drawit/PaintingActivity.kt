@@ -289,16 +289,12 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-
-
                     // store paint pos
                     // think we could lose 1 pixel start accuracy if we don't do this
                     val layers = canvasManager.getLayers()
                     if (layers.isEmpty()) return@setOnTouchListener false
 
                     // Get the active layer, falling back to the first if none is active
-
-
                     val pressedPos = getBitmapPaintPosFromCanvas(layers[0], event.x, event.y)
                     val x = pressedPos[0]
                     val y = pressedPos[1]
