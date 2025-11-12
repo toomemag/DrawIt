@@ -32,6 +32,7 @@ import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.Layer
 import com.example.drawit.painting.LayerTransformInput
 import com.example.drawit.painting.effects.BaseEffect
+import com.example.drawit.painting.PaintTool
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
 import com.example.drawit.ui.effects.EffectEditDialog
@@ -43,6 +44,7 @@ import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.collections.fill
 
 
 enum class CanvasGestureState {
@@ -221,7 +223,7 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             syncLayersToView()
         }
 
-
+        // Color picker
         findViewById<MaterialButton>(R.id.colorPicker).setOnClickListener {
             ColorPickerDialog.Builder(this)
                 .setTitle("Select a Color")
@@ -239,6 +241,17 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 .attachBrightnessSlideBar(true)
                 .show()
         }
+
+        // Fill
+        binding.toolFill.setOnClickListener {
+            canvasManager.setCurrentTool(PaintTool.FILL)
+        }
+
+        // Pen
+        binding.toolPen.setOnClickListener {
+            canvasManager.setCurrentTool(PaintTool.PEN)
+        }
+
 
         // effects button takes us to current layer added effects dialog
         findViewById<Button>(R.id.effectsButton).setOnClickListener { openAddedEffectsDialog( ) }
@@ -276,18 +289,28 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    // painting on pointer up
-                    drawingState = CanvasGestureState.PAINTING
-
                     // store paint pos
                     // think we could lose 1 pixel start accuracy if we don't do this
                     val layers = canvasManager.getLayers()
-                    if (layers.isNotEmpty()) {
-                        val pressedPos = getBitmapPaintPosFromCanvas(layers[0], event.x, event.y)
+                    if (layers.isEmpty()) return@setOnTouchListener false
 
-                        lastCanvasDrawPoint[0] = pressedPos[0]
-                        lastCanvasDrawPoint[1] = pressedPos[1]
+                    // Get the active layer, falling back to the first if none is active
+                    val pressedPos = getBitmapPaintPosFromCanvas(layers[0], event.x, event.y)
+                    val x = pressedPos[0]
+                    val y = pressedPos[1]
+
+                    if (canvasManager.getCurrentTool() == PaintTool.FILL) {
+                        canvasManager.fill(x, y)
+                        updateCanvasLayers() // Redraw canvas to show the change
+                        syncLayersToView()   // Update the layer thumbnail
+                        return@setOnTouchListener true // Consume the touch event
                     }
+
+                    // if not fill then proceed normally
+                    drawingState = CanvasGestureState.PAINTING
+
+                    lastCanvasDrawPoint[0] = x
+                    lastCanvasDrawPoint[1] = y
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {

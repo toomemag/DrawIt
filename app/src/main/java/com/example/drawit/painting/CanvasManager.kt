@@ -1,8 +1,12 @@
 package com.example.drawit.painting
 
+
+import java.util.LinkedList
+
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
+import java.util.Queue
 
 enum class PaintTool {
     PEN, BRUSH, FILL, ERASER
@@ -116,6 +120,75 @@ class CanvasManager {
      */
     fun getColor(): Int = paintColor
 
+    /**
+     * Sets the current tool.
+     * @param tool, The tool to set
+     */
+    fun setCurrentTool(tool : PaintTool) {
+        currentTool = tool
+    }
+
+    /**
+     * Gets the current tool.
+     * @return The current tool
+     */
+    fun getCurrentTool(): PaintTool {
+        return currentTool
+    }
+
+    /**
+     * Method to fill the active layer
+     * @param x,y, the coordinates to fill from
+     */
+    fun fill(x: Int, y : Int) {
+        // 1. Get the active layer to draw on.
+        val activeLayerIndex = getActiveLayerIndex()
+        if (activeLayerIndex == -1) return // Exit if no layer is active
+        val layer = getLayer(activeLayerIndex) ?: return
+        val bitmap = layer.bitmap
+
+        // 2. Boundary Check: Make sure the starting point is inside the bitmap.
+        if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) {
+            return
+        }
+
+        // 3. Get Target Color: This is the color of the pixel the user tapped.
+        val targetColor = bitmap.getPixel(x, y)
+
+        // 4. Get Fill Color: This is the currently selected paint color.
+        val fillColor = getColor() // Or however you get the current color, e.g., 'paintColor'
+
+        // 5. Early Exit: If the target area is already the correct color, do nothing.
+        if (targetColor == fillColor) {
+            return
+        }
+
+        // 6. Flood Fill Algorithm (using a Queue for Breadth-First Search)
+        val queue: Queue<Pair<Int, Int>> = LinkedList()
+        queue.add(Pair(x, y))
+
+        while (queue.isNotEmpty()) {
+            val (px, py) = queue.poll() ?: continue
+
+            // Check if the current pixel is within bounds
+            if (px < 0 || px >= bitmap.width || py < 0 || py >= bitmap.height) {
+                continue
+            }
+
+            // If the pixel's color is the one we want to replace...
+            if (bitmap.getPixel(px, py) == targetColor) {
+                // ...change its color to the new fill color...
+                bitmap.setPixel(px, py, fillColor)
+
+                // ...and add its four neighbors to the queue to be processed.
+                queue.add(Pair(px + 1, py)) // Right
+                queue.add(Pair(px - 1, py)) // Left
+                queue.add(Pair(px, py + 1)) // Bottom
+                queue.add(Pair(px, py - 1)) // Top
+            }
+        }
+    }
+
     fun serializeForFirebase(timeTaken: Int): Map<String, Any> {
         return mapOf(
             "userId" to Firebase.auth.currentUser?.uid.toString(),
@@ -127,4 +200,7 @@ class CanvasManager {
             "layers" to layers.map { layer -> layer.serializeForFirebase() }
         )
     }
+
+
+
 }
