@@ -116,6 +116,19 @@ class CanvasManager {
      */
     fun getColor(): Int = paintColor
 
+
+    fun setCurrentTool(tool : PaintTool) {
+        currentTool = tool
+    }
+
+    fun getCurrentTool(): PaintTool {
+        return currentTool
+    }
+
+    fun fill(x: Int, y : Int) {
+
+    }
+
     fun serializeForFirebase(timeTaken: Int): Map<String, Any> {
         return mapOf(
             "userId" to Firebase.auth.currentUser?.uid.toString(),
@@ -127,4 +140,7 @@ class CanvasManager {
             "layers" to layers.map { layer -> layer.serializeForFirebase() }
         )
     }
+
+
+
 }
