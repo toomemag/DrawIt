@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "188393596003",
+    "project_id": "drawit-46fdc",
+    "storage_bucket": "drawit-46fdc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188393596003:android:15765b99f5428cbb8dc456",
+        "android_client_info": {
+          "package_name": "com.example.drawit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCB_ZauUx9ZfieBf-CoLKtGJRbDM41POtw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,9 +4,33 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
 
-// todo: make global singleton
-//       creates all midllewares for available sensors and maps to
-//       corresponding effect classes
+/**
+ * Global singleton for managing available sensor effects.
+ * Creates all middlewares for available sensors and maps to corresponding effect classes.
+ * @param context Application context for getting sensor manager
+ *
+ * EffectManager member fields descriptions
+ * @property sensorManager SensorManager instance for accessing device sensors
+ * @property availableEffects Map of sensor type to corresponding BaseEffect instance
+ * @property sensorToEffectClass Map of sensor type to corresponding BaseEffect class
+ *
+ * Idea behind EffectManager and EffectContext:
+ * EffectManager holds global effect instances for each sensor type.
+ * EffectContext is created per view/component that needs to listen to sensor events and
+ *  manages sensor event listeners and routes events to registered callbacks.
+ *
+ * Example usage:
+ *      val ctx = effectManager.createContext()
+ *      ctx.addSensorListener(Sensor.TYPE_GYROSCOPE) { gyroscopeEffect, sensorEvent ->
+ *          // handle gyroscope sensor event
+ *      }
+ *
+ * In the view's onSensorChanged:
+ *      ctx.onSensorChanged(sensorEvent)
+ *
+ * Context calls listening listeners 📞
+ */
+
 class EffectManager(
     private val context: Context
 ) {
@@ -35,7 +59,6 @@ class EffectManager(
 
     var sensorToEffectClass: Map<Int, Class<out BaseEffect<*>>> = mapOf(
         Sensor.TYPE_GYROSCOPE to GyroscopeEffect::class.java
-
     )
 
     init {
@@ -56,39 +79,45 @@ class EffectManager(
         // maybe map sensors to corresponding effect classes here later
     }
 
-    // this literally came to me in a dream
-    // what if we create a "context" in views from manager, so that all events are passed to context's sensorevent listener
-    // context filters events out by sensor types and calls listening callbacks
-    //
-    // ctx = effectManager.createContext()
-    // ctx.addSensorListener(Sensor.TYPE_GYROSCOPE, gyroscopeEffect -> {
-    //      ...
-    // }
-    // ...
-    // inside onSensorChanged in view we call
-    //      ctx.onSensorChanged(sensorEvent)
-    // context calls listening listeners 📞
-    //
-    // why not here? context would be tied to a view's lifecycle, not global manager
-    // so that way we don't have to worry about unregistering listeners when view is destroyed etc
+    /**
+     * Creates a new EffectContext associated with this EffectManager.
+     * EffectContext manages sensor event listeners and effect instances for a specific view or component.
+     * @return A new EffectContext instance
+     */
     fun createContext(): EffectContext {
         return EffectContext(this)
     }
 
+    /**
+     * Gets the BaseEffect instance for the specified sensor type.
+     * @param sensorType The sensor type constant (e.g., Sensor.TYPE_GYROSCOPE)
+     * @return The corresponding BaseEffect instance, or null if not available
+     */
     fun getEffect(sensorType: Int): BaseEffect<*>? {
         return availableEffects[sensorType]
     }
 
+    /**
+     * Gets all available BaseEffect instances.
+     * @return A collection of all BaseEffect instances
+     */
     fun getEffects(): MutableCollection<BaseEffect<*>> {
         return availableEffects.values
     }
 
+    /**
+     * Gets the SensorManager instance.
+     * @return The SensorManager
+     */
     fun getSensorManager(): SensorManager {
         return sensorManager
     }
 
-    // https://stackoverflow.com/a/45952201
-    // maybe it's useful at any point
+    /**
+     * @unused https://stackoverflow.com/a/45952201 - may be useful at some point
+     * Gets the BaseEffect instance of the specified type.
+     * @return The corresponding BaseEffect instance of type T, or null if not available
+     */
     inline fun <reified T : BaseEffect<*>> getEffect(): T? {
         val entry = sensorToEffectClass.entries.firstOrNull { it.value == T::class.java } ?: return null
         return availableEffects[entry.key] as? T

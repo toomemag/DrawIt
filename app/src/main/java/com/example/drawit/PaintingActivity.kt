@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.hypot
 import androidx.core.graphics.set
 import com.example.drawit.databinding.DialogAddedEffectsBinding
+import com.example.drawit.databinding.DialogConfirmPaintingSubmitBinding
 import com.example.drawit.databinding.DialogNewEffectBinding
 import com.example.drawit.databinding.NodeEffectBinding
 import com.example.drawit.painting.CanvasManager
@@ -29,13 +30,19 @@ import kotlin.math.abs
 import kotlin.math.max
 import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.Layer
+import com.example.drawit.painting.LayerTransformInput
+import com.example.drawit.painting.effects.BaseEffect
 import com.example.drawit.painting.effects.EffectContext
 import com.example.drawit.painting.effects.GyroscopeEffect
+import com.example.drawit.ui.effects.EffectEditDialog
 import com.google.android.material.button.MaterialButton
-//import top.defaults.colorpicker.ColorPickerPopup
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import java.util.Timer
+import java.util.TimerTask
 
 
 enum class CanvasGestureState {
@@ -44,6 +51,18 @@ enum class CanvasGestureState {
     GESTURE
 }
 
+/**
+ * Main painting activity
+ *
+ * @property binding The view binding for the activity
+ * @property canvasManager The manager for handling canvas layers and drawing
+ * @property lastTouchMidPoint The last midpoint of touch events for gesture handling
+ * @property firstTouchDistance The initial distance between touch points for gesture handling
+ * @property canvasOffset The current offset of the canvas for panning
+ * @property drawingState The current state of canvas gestures (idle, painting, or gesture)
+ * @property lastCanvasDrawPoint The last point drawn on the canvas for interpolation
+ * @property effectContext The context for managing sensor-based effects
+ */
 class PaintingActivity : AppCompatActivity(), SensorEventListener {
     // binding for activity_painting.xml
     private lateinit var binding: ActivityPaintingBinding
@@ -56,13 +75,31 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
     private var firstTouchDistance: Float = 0f
     private var canvasOffset: Array<Float> = arrayOf(0f, 0f)
 
-    // frames arent consistent, if we move a finger along the canvas
-    // some pixels in between get skipped -> need to track last drawn point
     private var drawingState: CanvasGestureState = CanvasGestureState.IDLE
 
     // stored as pixel pos
     private var lastCanvasDrawPoint: Array<Int> = arrayOf(0, 0)
     private lateinit var effectContext: EffectContext
+
+    private var startTime: Long = System.currentTimeMillis()
+    private var lastPausedTime: Long = 0L
+
+    private fun isPaused(): Boolean {
+        return lastPausedTime != 0L
+    }
+
+    private fun pausePaintingTimer() {
+        lastPausedTime = System.currentTimeMillis()
+    }
+
+    private fun resumePaintingTimer() {
+        // don't count paused time towards total time
+        if (isPaused()) {
+            val pausedTime = System.currentTimeMillis() - lastPausedTime
+            startTime += pausedTime
+            lastPausedTime = 0L
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,16 +115,6 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         binding.titleText.text = if (mode == "daily_theme") "Theme" else "Freemode"
 
         effectContext = (application as DrawItApplication).effectManager.createContext()
-        effectContext.addSensorListener<GyroscopeEffect>(Sensor.TYPE_GYROSCOPE) { effect, sensorEvent ->
-            val ret = effect.translateSensorEvent(sensorEvent)
-
-            val layers = canvasManager.getLayers()
-
-            if (layers.size > 1 && canvasManager.getActiveLayerIndex() == -1) {
-                layers[0].setPos(ret[1].toInt().coerceIn(-60, 60), ret[0].toInt().coerceIn(-60, 60))
-                updateCanvasLayers()
-            }
-        }
 
         // titlebar would be below the phone's status bar, so add padding to compensate
         val originalTitlebarPaddingTop = binding.titlebar.paddingTop
@@ -117,30 +144,74 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         binding.toolbar.addOnLayoutChangeListener(relayoutListener)
         binding.gridBackground.addOnLayoutChangeListener(relayoutListener)
 
-        // on new painting click show a custom rendered popup
+        // on pause painting click show pause popup
         findViewById<Button>(R.id.pausePainting).setOnClickListener {
-            val dialogBinding = DialogPausePaintingBinding.inflate(layoutInflater)
+            val pauseDialogBinding = DialogPausePaintingBinding.inflate(layoutInflater)
 
             val dialog = MaterialAlertDialogBuilder(this)
-                .setView(dialogBinding.root)
+                .setView(pauseDialogBinding.root)
                 .create()
 
             // button listeners
-            dialogBinding.ActivePaintingContinue.setOnClickListener {
+            pauseDialogBinding.ActivePaintingContinue.setOnClickListener {
+                // back to painting
                 dialog.dismiss()
+
+                resumePaintingTimer()
             }
 
-            dialogBinding.ActivePaintingSaveExit.setOnClickListener {
+            pauseDialogBinding.ActivePaintingSaveExit.setOnClickListener {
                 // close activity
                 // todo: save painting
                 //       could implement a serializer in CanvasManager and store it locally
                 //       would be overriden when a new painting is saved and one exists
+                //
+                // todo: also autosaving, so 2 local saves (draft & autosave)
                 finish()
                 dialog.dismiss()
             }
 
             dialog.show()
             dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+            pausePaintingTimer()
+        }
+
+        // submit dialog
+        findViewById<MaterialButton>(R.id.submitPainting).setOnClickListener {
+            val sumbitDialogBinding = DialogConfirmPaintingSubmitBinding.inflate(layoutInflater)
+
+            val dialog = MaterialAlertDialogBuilder(this)
+                .setView(sumbitDialogBinding.root)
+                .create()
+
+            sumbitDialogBinding.SubmitPaintingSubmit.setOnClickListener {
+                val db = Firebase.firestore
+
+                // should always be paused though, dialog pauses anyway
+                val timeTakenSeconds = ((if (isPaused()) lastPausedTime - startTime else System.currentTimeMillis() - startTime) / 1000).toInt()
+
+                db.collection("paintings").add(
+                    canvasManager.serializeForFirebase(timeTakenSeconds)
+                ).addOnSuccessListener { dr ->
+                    android.util.Log.d("FirebaseDB", "DocumentSnapshot added with ID: ${dr.id}")
+                    // push back to mainactivity
+
+                    dialog.dismiss()
+                    finish()
+                }.addOnFailureListener { p0 ->
+                    android.util.Log.e("FirebaseDB", "Error adding document", p0)
+                }
+            }
+
+            sumbitDialogBinding.SubmitPaintingCancel.setOnClickListener {
+                dialog.dismiss()
+                resumePaintingTimer()
+            }
+
+            dialog.show()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            pausePaintingTimer()
         }
 
         findViewById<TextView>(R.id.newLayer).setOnClickListener {
@@ -250,8 +321,29 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
+
+        // update time taken
+        val timer = Timer( )
+        timer.scheduleAtFixedRate(object : TimerTask( ) {
+            override fun run( ) {
+                runOnUiThread {
+                    val timeSincePaused = if (isPaused()) System.currentTimeMillis() - lastPausedTime else 0L
+
+                    val currentTime = System.currentTimeMillis() - timeSincePaused
+                    val timeDiffSeconds = ( currentTime - startTime ) / 1000
+
+                    val minutes = timeDiffSeconds / 60
+                    val seconds = timeDiffSeconds % 60
+
+                    binding.titleTimer.text = String.format( "%d:%02d", minutes, seconds )
+                }
+            }
+        }, 0, 1000)
     }
 
+    /**
+     * Open dialog showing added effects on current layer
+     */
     private fun openAddedEffectsDialog() {
         // no layer no effects
         if (canvasManager.getActiveLayerIndex() == -1) return
@@ -266,18 +358,28 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
             dialog.dismiss()
         }
 
-        if (layer.effects.isNotEmpty()) {
+        if (layer.effectBindings.isNotEmpty()) {
             dialogBinding.noEffectsAddedText.height = 0
 
-            for (effect in layer.effects) {
+            for (effectBinding in layer.effectBindings) {
                 val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
+                val effect = (application as DrawItApplication).effectManager.getEffect(effectBinding.key)!!
 
                 effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
                 effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
 
                 effectItem.root.setOnClickListener {
-                    // todo: push to layer edit
-                    //       rn what's to do is effect edit/new layout
+                    // close available dialog, open edit dialog
+                    dialog.dismiss()
+
+                    EffectEditDialog(this, layer, effect, onEffectRemoved = {
+                        // refresh effect list since each layer can have one of each effect type
+                        // we need to update available effects list to add current effect back
+                        openAddedEffectsDialog()
+                    }, onEffectEditClose = {
+                        // reopen added effects dialog on edit close
+                        openAddedEffectsDialog()
+                    }).show()
                     //       and then layer serialization and backend (prob firebase)
                     //       and then lastly one draft save/load system locally
                 }
@@ -294,32 +396,63 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         dialog.show()
     }
 
+    /**
+     * Open dialog for selecting new effect to add to current layer
+     */
     private fun openEffectSelectionDialog() {
         val dialogBinding = DialogNewEffectBinding.inflate(layoutInflater)
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(dialogBinding.root)
             .create()
 
+        val activeLayer = canvasManager.getLayer(canvasManager.getActiveLayerIndex())!!
+
         dialogBinding.closeNewEffectsDialog.setOnClickListener {
             dialog.dismiss()
             openAddedEffectsDialog()
         }
 
-        val effects = (application as DrawItApplication).effectManager.getEffects()
+        val selectableEffects = (application as DrawItApplication).effectManager.getEffects().filter { effect -> !activeLayer.effectBindings.containsKey(effect.getEffectType()) }
 
-        if (effects.isNotEmpty()) {
+        if (selectableEffects.isNotEmpty()) {
             dialogBinding.noEffectText.height = 0
 
             // dialogBinding.effectsListView
             // push new effect layout to list
-            for (effect in effects) {
+            for (selectableEffect in selectableEffects) {
+                // one binding for each effect
+                if (activeLayer.effectBindings.containsKey(selectableEffect.getEffectType())) {
+                    continue
+                }
+
                 val effectItem = NodeEffectBinding.inflate(this.layoutInflater, dialogBinding.effectsListView, false)
 
-                effectItem.root.findViewById<TextView>(R.id.effectName).text = effect.getEffectName()
-                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = effect.getEffectDescription()
+                effectItem.root.findViewById<TextView>(R.id.effectName).text = selectableEffect.getEffectName()
+                effectItem.root.findViewById<TextView>(R.id.effectDesc).text = selectableEffect.getEffectDescription()
 
                 effectItem.root.setOnClickListener {
-                    // todo: push to new effect view
+                    // dismiss selection dialog
+                    dialog.dismiss()
+
+                    // added anyways, remove from selectable list
+                    // listener handles when effect is deleted to put it back in the list
+                    dialogBinding.effectsListView.removeView(effectItem.root)
+
+                    // create new binding in layer
+                    activeLayer.addEffectBinding(selectableEffect)
+                    // we can pass effects as references because
+                    // we're not directly modifying them
+                    // we're creating a "middleware" type of binding system in layers
+                    // so for each added effect there exists a key (effect sensor type)
+                    // and a list of LayerEffectBindings
+
+                    EffectEditDialog(this, activeLayer, selectableEffect, onEffectRemoved = {
+                        // refresh effect selection list
+                        openEffectSelectionDialog()
+                    }, onEffectEditClose = {
+                        // reopen added effects dialog on edit close
+                        openEffectSelectionDialog()
+                    }).show()
                 }
 
                 dialogBinding.effectsListView.addView(effectItem.root)
@@ -329,16 +462,29 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         dialog.show()
     }
 
+    /**
+     * Register sensor listeners on resume, method required by SensorEventListener
+     */
     override fun onResume() {
         super.onResume()
         effectContext.registerSensorListeners(this)
     }
 
+    /**
+     * Unregister sensor listeners on pause, method required by SensorEventListener
+     */
     override fun onPause() {
         super.onPause()
         effectContext.unregisterSensorListeners(this)
     }
 
+    /**
+     * Convert canvas touch position to bitmap paint position
+     * @param layer The layer to get the bitmap from
+     * @param x The x position on the canvas
+     * @param y The y position on the canvas
+     * @return The x and y position on the bitmap as an array
+     */
     private fun getBitmapPaintPosFromCanvas(layer: Layer, x: Float, y: Float): Array<Int> {
         val viewW = binding.canvas.width.toFloat().coerceAtLeast(1f)
         val viewH = binding.canvas.height.toFloat().coerceAtLeast(1f)
@@ -355,12 +501,19 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         return arrayOf(x, y)
     }
 
+    /**
+     * Handle painting on the active layer
+     * @param v The canvas view
+     * @param event The motion event
+     * @return True if the paint action was handled, false otherwise
+     */
     private fun onLayerPaint(v: CanvasView, event: MotionEvent): Boolean {
         val activeIndex = canvasManager.getActiveLayerIndex()
         val layer = canvasManager.getLayer(activeIndex)
 
         if (layer == null) {
             // no active layer selected
+            // todo: show toast? title should 100% only stay as theme
             binding.titleText.text = "No active layer"
             // report click
             v.performClick()
@@ -383,6 +536,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                 // x or y axis
                 val steps = max(distX, distY)
 
+                // frames arent consistent, if we move a finger along the canvas
+                // some pixels in between get skipped -> need to track last drawn point
                 for (i in 1..steps) {
                     val t = i.toFloat() / steps.toFloat()
                     val interpX = (lastX + t * (x - lastX)).toInt()
@@ -402,7 +557,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    // layers row update
+    /**
+     * Sync the canvas layers on the bottom to the layer preview views
+     */
     private fun syncLayersToView() {
         // todo: could separate into addNewLayer and refreshLayers
         // right now clearing all older views and think this is performance overhead
@@ -460,6 +617,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     if (index != -1) {
                         // bug: can click between layers and that selects no layer
                         if (index != activeIndex) {
+                            // no sensor events! we're not in preview mode
+                            onPause()
+
                             // if we had no layer selected before -> in preview mode
                             // if we switch from preview to active layer (edit mode)
                             // layer pos offsets from event listeners stay
@@ -473,10 +633,8 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                         } else {
                             canvasManager.setActiveLayer(-1)
 
-                            // reset sensor data
-                            // for gyro sets all pos fields to 0, otherwise phone rotation will
-                            // be carried over preview switches
-                            effectContext.resetAllEffects()
+                            // update all layers and their effects
+                            updateAllLayerEffects()
                         }
 
                         // update drawing area, if we switch layers without this here
@@ -506,6 +664,9 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         updateCanvasLayers()
     }
 
+    /**
+     * Update the canvas view with the current layers from the canvas manager
+     */
     private fun updateCanvasLayers() {
         binding.canvas.apply {
             layers = canvasManager.getLayers().reversed()
@@ -514,25 +675,29 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     // canvas resizing and moving
+    /**
+     * Handle touch events for canvas gestures (panning and zooming)
+     * @param event The motion event
+     * @return True if the event was handled, false otherwise
+     *
+     * @desc 2 bugs!
+     *       - ACTION_POINTER_DOWN isn't called when 2nd finger lands
+     */
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // todo: canvas doesnt get moved or scaled
         if (event.pointerCount < 2) {
             super.onTouchEvent(event)
             return true
         }
 
-        // bug: zoom freaks  out if too zoomed in (i guess upper bound is hit?)
-        // bug: ACTION_POINTER_DOWN isn't called when 2nd finger lands
-
         when ( event.actionMasked ) {
-            MotionEvent.ACTION_POINTER_DOWN -> { // do we need ACTION_POINTER_DOWN aswell?
+            MotionEvent.ACTION_POINTER_DOWN -> {
                 // on press ( aka event down) we want to store the initial
                 // touch position
 
                 firstTouchDistance = hypot(
                     (event.getX(1) - event.getX(0)).toDouble(),
                     (event.getY(1) - event.getY(0)).toDouble()
-                ).toFloat()
+                ).toFloat() * (1 / binding.canvasContainer.scaleX)
 
                 lastTouchMidPoint[0] = (event.getX(0) + event.getX(1)) / 2f
                 lastTouchMidPoint[1] = (event.getY(0) + event.getY(1)) / 2f
@@ -561,14 +726,15 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
                     (event.getY(1) - event.getY(0)).toDouble()
                 ).toFloat()
 
-                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 5f)
+                // use distance from initial zoom, not accumulative
+                // meaning if we take current zoom pos (eg 0.5x, first zoom pos 1x
+                //      where x represents some units between pointer 1 and 2, not the scale)
+                // new zoom = 0.5x = 1x / 0.5x
+                // first 0.5x, current 2x, new zoom 2x / 0.5x
+                val scaleFactor = Math.clamp( currentDistance / firstTouchDistance, .2f, 8f)
 
-                // does scale scale about mid or posxy?
-                binding.canvasContainer.scaleX *= scaleFactor
-                binding.canvasContainer.scaleY *= scaleFactor
-
-                // reset for next move
-                firstTouchDistance = currentDistance
+                binding.canvasContainer.scaleX = scaleFactor
+                binding.canvasContainer.scaleY = scaleFactor
 
                 binding.canvasContainer.translationX = canvasOffset[0]
                 binding.canvasContainer.translationY = canvasOffset[1]
@@ -578,16 +744,33 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         return super.onTouchEvent(event)
     }
 
-    // sensor events
+    /**
+     * Handle sensor change events, method required by SensorEventListener
+     * @param sensorEvent The sensor event
+     *
+     * @desc Delegates the sensor event to the effect context for processing.
+     */
     override fun onSensorChanged(sensorEvent: SensorEvent) {
         effectContext.onSensorChanged(sensorEvent)
     }
 
+    /**
+     * Handle sensor accuracy changes, method required by SensorEventListener
+     * @param sensor The sensor
+     * @param accuracy The new accuracy
+     *
+     * @desc unused method from SensorEventListener interface
+     */
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // from SensorEventListener, don't need it i think
     }
 
-    // grid background update
+    /**
+     * Update the overlay gradient stops on the grid background
+     *
+     * @desc Calculates the positions of the title bar and toolbar relative to the grid background
+     *       and updates the gradient overlay stops accordingly to ensure proper rendering.
+     */
     private fun updateOverlayStops() {
         // get positions to draw gradient (hides grid) correctly
         val gridLoc = IntArray(2)
@@ -605,5 +788,82 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         val start = titlebarBottomY.coerceIn(0, binding.gridBackground.height)
         val end = toolbarTopY.coerceIn(start, binding.gridBackground.height)
         binding.gridBackground.updateOverlayStops(start, end)
+    }
+
+    /**
+     * Update all layer effects, called when no layer is selected
+     */
+    private fun updateAllLayerEffects() {
+        // 1. reset effect states
+        effectContext.resetAllEffects()
+
+        // 2. remove old listeners
+        effectContext.removeAllSensorListeners()
+
+        // 3. get all layer effects
+        val effectsToListen = mutableSetOf<Int>()
+
+        val layers = canvasManager.getLayers()
+        for (layer in layers) {
+            for (effectBinding in layer.effectBindings) {
+                val effectType = effectBinding.key
+                effectsToListen.add(effectType)
+            }
+        }
+
+        android.util.Log.d("EffectContext", "updateAllLayerEffects - effects to listen for: $effectsToListen")
+
+        // 4. register all effects
+        for (sensorType in effectsToListen) {
+            val effect = (application as DrawItApplication).effectManager.getEffect(sensorType)
+            if (effect != null) {
+                android.util.Log.d("EffectContext", "updateAllLayerEffects - adding listener for: ${effect.getEffectName()}")
+                // we need to add listeners to each effect
+                effectContext.addSensorListener(effect.getEffectType()) { effect, sensorEvent ->
+                    // first update the sensor inner value to use
+                    // in transform
+                    effect.translateSensorEvent(sensorEvent)
+
+                    for (layer in layers) {
+                        val bindings = layer.effectBindings[effect.getEffectType()] ?: continue
+
+                        val layerAppliedTransforms = mutableSetOf<LayerTransformInput>()
+
+                        // ok we have a binding
+                        for (layerEffectBinding in bindings) {
+                            // i hope I can find a cleaner/dynamic casting way
+                            val hasAppliedTransform = layerAppliedTransforms.contains(layerEffectBinding.layerTransformInput)
+                            when (effect) {
+                                is GyroscopeEffect -> {
+                                    val t = effect.getTransformInput(
+                                        layerEffectBinding.effectInputIndex
+                                    )
+
+                                    layer.applyEffectTranslation(t, layerEffectBinding.layerTransformInput, hasAppliedTransform)
+                                }
+                                else -> {
+                                    @Suppress("UNCHECKED_CAST")
+                                    val t = (effect as BaseEffect<Int>).getTransformInput(
+                                        layerEffectBinding.effectInputIndex
+                                    )
+
+                                    layer.applyEffectTranslation(t, layerEffectBinding.layerTransformInput, hasAppliedTransform)
+                                }
+                            }
+
+                            layerAppliedTransforms.add(layerEffectBinding.layerTransformInput)
+                        }
+                    }
+
+                    // update canvas when listener is done
+                    updateCanvasLayers()
+                }
+            } else {
+                android.util.Log.w("EffectContext", "updateAllLayerEffects - no effect found for sensor type $sensorType")
+            }
+        }
+
+        // re-register listeners
+        onResume()
     }
 }

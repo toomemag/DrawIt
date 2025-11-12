@@ -72,6 +72,17 @@
                     android:fontFamily="@font/drawn"
                     android:layout_gravity="center_vertical"
                     android:paddingTop="4dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/submitPainting"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    app:icon="@drawable/baseline_check_24"
+                    android:layout_gravity="center_vertical"
+                    app:iconPadding="0dp"
+                    android:layout_marginLeft="10dp"
+                    app:iconGravity="textStart"
+                    android:paddingTop="4dp" />
             </LinearLayout>
 
         </LinearLayout>
@@ -180,7 +191,6 @@
                 android:orientation="horizontal"
                 >
 
-                <!-- todo: add "material" for bg -->
                 <!-- todo: add support for reordering layers -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/newLayer"
@@ -190,7 +200,7 @@
                     android:layout_marginStart="0dp"
                     app:iconPadding="0dp"
                     app:iconGravity="textStart"
-                    android:background="#22000000"
+                    android:background="@drawable/dialog_bg"
                     app:icon="@drawable/baseline_add_72"
                     app:iconTint="@color/colorCanvasBorder"
                     android:layout_gravity="center" />
@@ -207,7 +217,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
-            <!-- todo: add bg from parent and make guideline grid for pixels -->
             <LinearLayout
                 android:id="@+id/canvasContainer"
                 android:layout_width="380dp"

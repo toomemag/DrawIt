@@ -12,14 +12,35 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.widget.Button
 import com.example.drawit.databinding.DialogNewPaintingBinding
 import android.content.Intent
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 class MainActivity : AppCompatActivity() {
 
     // binding for activity_main.xml
     private lateinit var binding: ActivityMainBinding
 
+    // firebase auth instance
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        auth = Firebase.auth
+
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            auth.signInWithEmailAndPassword("test@test.ee", "[redacted]").addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Sign in success
+                } else {
+                    // If sign in fails, display a message to the user.
+                    android.util.Log.e( "AuthFlow", "firebase auth failed: ${task.exception}")
+                }
+            }
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
