@@ -13,6 +13,7 @@ import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -245,11 +246,13 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
         // Fill
         binding.toolFill.setOnClickListener {
             canvasManager.setCurrentTool(PaintTool.FILL)
+            highlightToolButton()
         }
 
         // Pen
         binding.toolPen.setOnClickListener {
             canvasManager.setCurrentTool(PaintTool.PEN)
+            highlightToolButton()
         }
 
 
@@ -888,5 +891,31 @@ class PaintingActivity : AppCompatActivity(), SensorEventListener {
 
         // re-register listeners
         onResume()
+    }
+
+    /**
+     * Highlights the currently used tool button
+     */
+    private fun highlightToolButton() {
+        val currentTool = canvasManager.getCurrentTool()
+
+        val toolButtonMap = mapOf(
+            PaintTool.PEN to binding.toolPen,
+            PaintTool.BRUSH to binding.toolBrush,
+            PaintTool.FILL to binding.toolFill,
+            PaintTool.ERASER to binding.toolEraser
+        )
+
+
+        val selectedColor = ContextCompat.getColor(this, R.color.purple_200)
+        val defaultColor = ContextCompat.getColor(this, R.color.purple_500)
+
+        for ((tool, button) in toolButtonMap) {
+            if (tool == currentTool) {
+                button.backgroundTintList = ColorStateList.valueOf(selectedColor)
+            } else {
+                button.backgroundTintList = ColorStateList.valueOf(defaultColor)
+            }
+        }
     }
 }
