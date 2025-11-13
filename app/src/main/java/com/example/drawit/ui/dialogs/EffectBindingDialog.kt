@@ -44,7 +44,7 @@ fun EffectBindingDialog(
     onDismiss: () -> Unit,
 ) {
     // on effect/layer change, update binding list
-    val bindings = remember(effect, layer.getEffectBindings(effect).size) {
+    val bindings = remember( layer.effectBindings[effect.getEffectType()]?.size) {
         mutableStateListOf<LayerEffectBinding>().apply {
             addAll(layer.getEffectBindings(effect))
         }
@@ -111,7 +111,8 @@ fun EffectBindingDialog(
                     bindings.forEachIndexed { index, layerEffectBinding ->
                         EffectBindingListItem(
                             effect = effect,
-                            binding = layerEffectBinding
+                            // cant use state, copied
+                            binding = layer.effectBindings[effect.getEffectType()]!![index]
                         )
 
                         Spacer(modifier = Modifier.height(2.dp))
@@ -139,12 +140,14 @@ fun EffectBindingDialog(
                     // add new binding
                     Button(
                         onClick = {
-                            bindings.add(
-                                LayerEffectBinding(
-                                    effectOutputIndex = 0,
-                                    layerTransformInput = LayerTransformInput.X_POS
-                                )
+                            val newBinding = LayerEffectBinding(
+                                effectOutputIndex = 0,
+                                layerTransformInput = LayerTransformInput.X_POS
                             )
+
+                            layer.effectBindings[effect.getEffectType()]!!.add( newBinding )
+                            // also update state list
+                            bindings.add( newBinding )
                         },
 
                         modifier = Modifier

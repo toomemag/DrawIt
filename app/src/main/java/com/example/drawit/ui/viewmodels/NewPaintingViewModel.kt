@@ -103,6 +103,9 @@ class NewPaintingViewModel(
     // instead of 0 we have null (not paused state)
     private var lastPausedTime: Long? = null
 
+    var _test_onPauseFromParent: ( ) -> Unit = { }
+    var _test_onResumeFromParent: ( ) -> Unit = { }
+
     // not sure we can avoid the leak, unless we do painting logic outside of viewmodel
     @SuppressLint("StaticFieldLeak")
     private var canvasViewRef: CanvasView? = null
@@ -232,6 +235,20 @@ class NewPaintingViewModel(
     }
 
     fun setActiveLayer(index: Int?) {
+        if (index == null) {
+            // no layer selected, enter preview
+            _test_onResumeFromParent()
+
+            updateAllLayerEffects()
+        } else {
+            _test_onPauseFromParent()
+
+            // reset all positions to initial
+            for ( layer in layers.value ) {
+                layer.setPos(0, 0)
+            }
+        }
+
         canvasManager.setActiveLayer(index)
         syncLayersToState()
     }
@@ -420,7 +437,7 @@ class NewPaintingViewModel(
             }
         }
 
-        // todo: reregister all sensors
+        _test_onResumeFromParent()
     }
 
     /**
