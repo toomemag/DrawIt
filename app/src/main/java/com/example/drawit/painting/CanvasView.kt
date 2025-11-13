@@ -90,6 +90,7 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
      */
     fun invalidateLayers() {
         invalidate()
+        android.util.Log.d( "CanvasView", "layers invalidated, redraw triggered" )
     }
 
     /**

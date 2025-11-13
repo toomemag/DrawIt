@@ -49,7 +49,7 @@ abstract class BaseEffect<T>(
      * @desc We need a way to get layer inputs to map to layer outputs (xy, scale, rotation, etc.).
      *       More importantly we need to let the UI know what inputs are available for binding.
      */
-    fun getEffectInputOptions(): List<String> {
+    fun getEffectOutputOptions(): List<String> {
         return inputOptions
     }
 
