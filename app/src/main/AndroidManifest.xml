@@ -12,16 +12,19 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".DrawItApplication"
-        android:theme="@style/Theme.DrawIt">
+        android:name=".DrawItApplication">
+
         <activity
             android:name=".PaintingActivity"
-            android:exported="false"
-            android:theme="@style/Theme.DrawIt.NoActionBar" />
+            android:theme="@style/Theme.Drawit"
+            />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Drawit"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

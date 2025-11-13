@@ -21,11 +21,11 @@ enum class LayerTransformInput {
 
 /**
  * Binds an effect output to a layer transform input
- * @param effectInputIndex The index of the effect output to bind
+ * @param effectOutputIndex The index of the effect output to bind
  * @param layerTransformInput The layer transform input to bind to
  */
 data class LayerEffectBinding(
-    var effectInputIndex: Int,
+    var effectOutputIndex: Int,
     var layerTransformInput: LayerTransformInput,
 )
 
@@ -47,6 +47,8 @@ class Layer(var name: String = "Layer") {
     var offset: Array<Int> = arrayOf(0, 0)
 
     val effectBindings: MutableMap<Int, MutableList<LayerEffectBinding>> = mutableMapOf()
+
+    var lastUpdatedTimestamp: Long = 0
 
     // paint with no anti-aliasing or bitmap filtering for pixel art style
     var paint = android.graphics.Paint().apply {
@@ -143,7 +145,7 @@ class Layer(var name: String = "Layer") {
         for ( (effectType, bindings) in effectBindings ) {
             val bindingList = bindings.map { binding ->
                 mapOf(
-                    "effectInputIndex" to binding.effectInputIndex,
+                    "effectInputIndex" to binding.effectOutputIndex,
                     "layerTransformInput" to binding.layerTransformInput.name
                 )
             }

@@ -16,9 +16,9 @@ enum class PaintTool {
  * @property brushSize The current brush size
  * @property currentTool The currently selected paint tool
  */
-class CanvasManager {
+class CanvasManager{
     private val layers = mutableListOf<Layer>()
-    private var paintColor: Int = 0xFFFFFFFF.toInt()
+    private var paintColor: Int = 0xFF000000.toInt()
     private var brushSize: Int = 1
     private var currentTool: PaintTool = PaintTool.PEN
 
@@ -27,12 +27,17 @@ class CanvasManager {
         layers.add(Layer(name = "Layer1"))
     }
 
+    fun getTool( ): PaintTool { return currentTool }
+    fun getBrushSize( ): Int { return brushSize }
+    fun setTool( tool: PaintTool ) { currentTool = tool }
+    fun setBrushSize( size: Int ) { brushSize = size }
+
     /**
-     * Sets the active layer by index. If index is -1, all layers are deactivated.
-     * @param index The index of the layer to activate, or -1 to deactivate all layers
+     * Sets the active layer by index. If index is null, all layers are deactivated.
+     * @param index The index of the layer to activate, or null to deactivate all layers
      */
-    fun setActiveLayer(index: Int) {
-        if (index == -1) {
+    fun setActiveLayer(index: Int?) {
+        if (index == null) {
             // disable all layers
             for (layer in layers) layer.isActive = false
         } else {
@@ -46,13 +51,13 @@ class CanvasManager {
      * Gets the index of the currently active layer.
      * @return The index of the active layer, or -1 if no layer is active
      */
-    fun getActiveLayerIndex(): Int {
+    fun getActiveLayerIndex(): Int? {
         for (layerIdx in layers.indices) {
             if (layers[layerIdx].isActive) {
                 return layerIdx
             }
         }
-        return -1
+        return null
     }
 
     /**
@@ -93,6 +98,7 @@ class CanvasManager {
         addLayer("Layer${getLayers().size + 1}")
         // set created layer as active (felt a bit more intuitive rather than clicking new and then selecting the layer)
         setActiveLayer(getLayers().size - 1)
+        android.util.Log.d( "CanvasManager", "added new layer, total=${getLayers().size}" )
     }
 
     /**
