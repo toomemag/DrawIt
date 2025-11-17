@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">DrawIt</string>
     <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
+    <string name="title_top_last_day">Yesterday</string>
     <string name="title_notifications">Notifications</string>
     <string name="title_apiexample">Api Example (Step 3)</string>
 
