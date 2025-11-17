@@ -338,6 +338,25 @@ class NewPaintingViewModel(
 
     }
 
+    /**
+     * Fills an area on the active layer with the currently selected color.
+     * This function delegates the core fill logic to the CanvasManager.
+     * @param layerPos The starting position (x, y) on the bitmap to begin the fill.
+     */
+    fun fillAt(layerPos: Pair<Int, Int>) {
+        // The fill logic is intensive, so launch it in a background thread.
+        viewModelScope.launch(Dispatchers.Default) {
+            // Delegate the fill operation to the CanvasManager
+            canvasManager.fill(layerPos.first, layerPos.second)
+
+            // After filling, update the UI on the main thread.
+            withContext(Dispatchers.Main) {
+                // This ensures the layer preview and canvas are redrawn.
+                updatePreviewsAndSyncLayersToState()
+            }
+        }
+    }
+
     fun getLayerBitmap(layerIndex: Int): Bitmap? {
         val layer = canvasManager.getLayer(layerIndex) ?: return null
         return layer.bitmap

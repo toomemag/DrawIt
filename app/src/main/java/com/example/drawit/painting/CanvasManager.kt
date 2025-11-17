@@ -110,7 +110,7 @@ class CanvasManager{
      * @param index The index of the layer to get
      * @return The layer at the specified index, or null if index is out of bounds
      */
-    fun getLayer(index: Int): Layer? = layers.getOrNull(index)
+    fun getLayer(index: Int?): Layer? = layers.getOrNull(index!!)
 
     /**
      * Sets the current paint color.
