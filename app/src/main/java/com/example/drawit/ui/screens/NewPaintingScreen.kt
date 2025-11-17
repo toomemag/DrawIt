@@ -376,6 +376,13 @@ fun NewPaintingScreen(
                                                         Pair(event.x.toInt(), event.y.toInt()),
                                                     )
 
+                                                //Fill
+                                                if (viewmodel.currentTool.value == PaintTool.FILL) {
+                                                    viewmodel.fillAt(bitmapPos)
+                                                    return@setOnTouchListener true
+                                                }
+
+                                                viewmodel.setGestureState(CanvasGestureState.PAINTING)
                                                 viewmodel.setLastCanvasDrawPoint(bitmapPos)
 
                                                 return@setOnTouchListener true
@@ -470,6 +477,7 @@ fun NewPaintingScreen(
                         icon = Icons.Default.FormatColorFill,
                         iconContentDescription = "fill"
                     )
+
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.ERASER) },
                         isSelected = currentTool == PaintTool.ERASER,
