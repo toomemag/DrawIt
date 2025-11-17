@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -454,28 +455,36 @@ fun NewPaintingScreen(
                         onClick = { viewmodel.setTool(PaintTool.PEN) },
                         isSelected = currentTool == PaintTool.PEN,
                         icon = Icons.Default.BorderColor,
-                        iconContentDescription = "pen"
+                        iconContentDescription = "pen",
+                        buttonModifier = Modifier.testTag("penButton")
+
                     )
 
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.BRUSH) },
                         isSelected = currentTool == PaintTool.BRUSH,
                         icon = Icons.Default.Brush,
-                        iconContentDescription = "brush"
+                        iconContentDescription = "brush",
+                        buttonModifier = Modifier.testTag("brushButton")
+
                     )
 
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.FILL) },
                         isSelected = currentTool == PaintTool.FILL,
                         icon = Icons.Default.FormatColorFill,
-                        iconContentDescription = "fill"
+                        iconContentDescription = "fill",
+                        buttonModifier = Modifier.testTag("fillButton")
+
                     )
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.ERASER) },
                         isSelected = currentTool == PaintTool.ERASER,
                         icon = Icons.Default.Folder,
                         iconContentDescription = "fill",
-                        iconModifier = Modifier.rotate(-90f)
+                        iconModifier = Modifier.rotate(-90f),
+                        buttonModifier = Modifier.testTag("eraserButton")
+
                     )
 
                     Box(modifier = Modifier.weight(1f))

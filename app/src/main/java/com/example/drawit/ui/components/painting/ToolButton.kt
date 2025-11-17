@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 
 
 @Composable
@@ -16,9 +18,13 @@ fun ToolButton(
     isSelected: Boolean = false,
     icon: ImageVector,
     iconContentDescription: String = "unknown tool",
-    iconModifier: Modifier = Modifier
+    iconModifier: Modifier = Modifier,
+    buttonModifier: Modifier = Modifier
 ) {
     IconButton(
+        modifier = buttonModifier.semantics {
+            this.selected = isSelected
+        },
         onClick = onClick,
         colors = IconButtonColors(
             contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer,
