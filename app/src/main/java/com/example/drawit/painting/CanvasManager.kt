@@ -148,8 +148,7 @@ class CanvasManager{
      */
     fun fill(x: Int, y : Int) {
         // 1. Get the active layer to draw on.
-        val activeLayerIndex = getActiveLayerIndex()
-        if (activeLayerIndex == -1) return // Exit if no layer is active
+        val activeLayerIndex = getActiveLayerIndex() ?: return
         val layer = getLayer(activeLayerIndex) ?: return
         val bitmap = layer.bitmap
 

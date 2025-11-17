@@ -99,6 +99,8 @@ fun NewPaintingScreen(
 
     if (isSystemInDarkTheme()) {
         viewmodel.setColor(Color(0xFFffffff))
+    } else {
+        viewmodel.setColor(Color(0xFF000000))
     }
 
     DrawitTheme {

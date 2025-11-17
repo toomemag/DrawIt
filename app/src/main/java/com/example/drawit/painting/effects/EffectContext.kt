@@ -116,6 +116,7 @@ class EffectContext(
 
         for (listener in listeners) {
             try {
+                android.util.Log.d("EffectContext", "onSensorChanged - invoking listener for sensor \"${sensorEvent.sensor.name}\"")
                 listener(effect, sensorEvent)
             } catch (e: Exception) {
                 android.util.Log.e("EffectContext", "onSensorChanged - sensor \"${sensorEvent.sensor.name}\" listener errored", e)

@@ -21,13 +21,19 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
     private val viewmodel: NewPaintingViewModel by viewModels {
         NewPaintingVMFactory(effectManager)
     }
-    private lateinit var effectManager: EffectManager
+
+    val effectManager: EffectManager by lazy { EffectManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        effectManager = EffectManager(this)
+        viewmodel._test_onPauseFromParent = {
+            onPause()
+        }
+        viewmodel._test_onResumeFromParent = {
+            onResume()
+        }
 
         lifecycleScope.launch {
             viewmodel.paintingSubmitResult.collectLatest { result ->
@@ -74,5 +80,8 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
-    override fun onSensorChanged(event: SensorEvent?) { }
+    override fun onSensorChanged(event: SensorEvent?) {
+        android.util.Log.d("PaintingActivity", "onSensorChanged - sensor event received ${event.toString()}")
+        if (event != null) viewmodel.onSensorEvent(event)
+    }
 }
