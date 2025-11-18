@@ -58,8 +58,11 @@ class EffectManager(
 //    )
 
     var sensorToEffectClass: Map<Int, Class<out BaseEffect<*>>> = mapOf(
-        Sensor.TYPE_GYROSCOPE to GyroscopeEffect::class.java
+        Sensor.TYPE_GYROSCOPE to GyroscopeEffect::class.java,
+        Sensor.TYPE_LIGHT to LightSensorEffect::class.java
     )
+
+
 
     init {
         // https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview
