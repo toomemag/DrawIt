@@ -1,13 +1,18 @@
 package com.example.drawit
 
+import android.Manifest
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.lifecycleScope
 import com.example.drawit.painting.effects.EffectManager
 import com.example.drawit.ui.screens.NewPaintingScreen
@@ -21,7 +26,6 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
     private val viewmodel: NewPaintingViewModel by viewModels {
         NewPaintingVMFactory(effectManager)
     }
-
     val effectManager: EffectManager by lazy { EffectManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +56,25 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
         }
 
         setContent {
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = { isGranted ->
+                    if (isGranted) {
+                        android.util.Log.d("Permissions", "BODY_SENSORS permission granted.")
+                        // Permission is granted. We can now expect sensor events
+                        onResume()
+                    } else {
+                        android.util.Log.w("Permissions", "BODY_SENSORS permission denied.")
+                    }
+                }
+            )
+
+            // Trigger the permission request when the Composable is first displayed.
+            LaunchedEffect(Unit) {
+                permissionLauncher.launch(Manifest.permission.BODY_SENSORS)
+            }
+
             DrawitTheme {
                 NewPaintingScreen(
                     viewmodel = viewmodel,
