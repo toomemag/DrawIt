@@ -9,5 +9,6 @@ enum class LayerTransformInput {
     X_POS,
     Y_POS,
     ROTATION,
-    SCALE
+    SCALE,
+    ALPHA
 }
