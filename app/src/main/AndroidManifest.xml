@@ -13,7 +13,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".DrawItApplication">
+        android:name=".DrawItApplication"
+        >
 
         <activity
             android:name=".PaintingActivity"
@@ -24,7 +25,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Drawit"
+            android:theme="@style/Theme.DrawitSplashScreen"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

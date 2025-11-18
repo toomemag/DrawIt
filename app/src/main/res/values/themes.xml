@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.DrawitSplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#ff6868d9</item>
+        <item name="postSplashScreenTheme">@style/Theme.Drawit</item>
+    </style>
+
     <style name="Theme.Drawit" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

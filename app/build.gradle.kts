@@ -51,6 +51,7 @@ dependencies {
     // core AndroidX + UI
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.core.splashscreen)
 
     // compose bill of materials
     implementation(platform(libs.androidx.compose.bom))

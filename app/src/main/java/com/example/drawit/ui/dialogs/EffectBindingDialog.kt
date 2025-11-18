@@ -74,19 +74,21 @@ fun EffectBindingDialog(
         ) {
             Text(
                 text=effect.getEffectName(),
-                style=MaterialTheme.typography.displayMedium,
-                color=MaterialTheme.colorScheme.onSurface,
+                style=MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Text(
                 text=effect.getEffectDescription(),
-                style=MaterialTheme.typography.bodyMedium,
+                style=MaterialTheme.typography.bodyLarge,
                 color=MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 10.dp)
+                    .padding(bottom = 10.dp),
+                textAlign = TextAlign.Center
             )
 
             // without container with rounding, scroll forces
