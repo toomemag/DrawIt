@@ -1,5 +1,7 @@
 [versions]
+androidx-room = "2.8.3"
 core-ktx = "1.17.0"
+core-splashscreen = "1.0.0"
 
 compose-bom = "2025.10.01"
 compose-material3 = "1.4.0"
@@ -24,11 +26,18 @@ converterGson = "3.0.0"
 kotlin = "2.2.21"
 agp = "8.13.0"
 uiUnit = "1.9.4"
+ksp = "2.2.20-2.0.4"
 
 
 [libraries]
-androidx-core-ktx                           = { group = "androidx.core",                name = "core-ktx",                  version.ref = "core-ktx"    }
-androidx-compose-material-icons-extended    = { group = "androidx.compose.material",    name = "material-icons-extended"                                }
+androidx-core-ktx                           = { group = "androidx.core",                name = "core-ktx",                  version.ref = "core-ktx"             }
+androidx-compose-material-icons-extended    = { group = "androidx.compose.material",    name = "material-icons-extended"                                         }
+androidx-core-splashscreen                  = { group = "androidx.core",                name = "core-splashscreen",         version.ref = "core-splashscreen"    }
+
+# room db
+androidx-room-ktx       = { module = "androidx.room:room-ktx",      version.ref = "androidx-room" }
+androidx-room-runtime   = { module = "androidx.room:room-runtime",  version.ref = "androidx-room" }
+androidx-room-compiler  = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 
 # composables (https://developer.android.com/develop/ui/compose/setup#kotlin)
 androidx-compose-bom       = { group = "androidx.compose",              name = "compose-bom",  version.ref = "compose-bom"          }
@@ -79,5 +88,6 @@ androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", ve
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services" }
 

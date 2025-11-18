@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -72,11 +73,9 @@ import com.example.drawit.utils.invert
 import com.example.drawit.utils.modify
 
 
-@Preview
 @Composable
 fun NewPaintingScreen(
-    // for preview
-    viewmodel: NewPaintingViewModel = remember { NewPaintingViewModel() },
+    viewmodel: NewPaintingViewModel,
     modifier: Modifier = Modifier.fillMaxSize(),
     canvasSizeDp: Dp  = 380.dp,
 
@@ -128,8 +127,10 @@ fun NewPaintingScreen(
             when (isPaintingPaused) {
                 true -> {
                     PausePainting(
+                        hasDrawn = viewmodel.hasDrawn(),
                         onSaveAndExit = {
-                            // todo: save to localStorage
+                            viewmodel.savePaintingToLocalDatabase()
+
                             onPostSaveAndExit()
                         },
                         onBackToPainting = {
@@ -174,7 +175,7 @@ fun NewPaintingScreen(
                         android.util.Log.d("NewPaintingScreen", "isNewEffectDialogOpen - active layer is null, closing dialog")
                         viewmodel.closeNewEffectDialog()
                     } else {
-                        val activeLayer = layers[viewmodel.activeLayerIndex.value!!]
+                        val activeLayer = layers[activeIndex!!]
 
                         // get all types we already have for layer
                         val bindings = activeLayer.effectBindings
@@ -227,6 +228,7 @@ fun NewPaintingScreen(
                     }
                 } else -> {}
             }
+
 //        AndroidView(factory = { ctx ->
 //            GridBackgroundView(ctx).apply {
 //                layoutParams = ViewGroup.LayoutParams(
@@ -461,21 +463,27 @@ fun NewPaintingScreen(
                         onClick = { viewmodel.setTool(PaintTool.PEN) },
                         isSelected = currentTool == PaintTool.PEN,
                         icon = Icons.Default.BorderColor,
-                        iconContentDescription = "pen"
+                        iconContentDescription = "pen",
+                        buttonModifier = Modifier.testTag("penButton")
+
                     )
 
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.BRUSH) },
                         isSelected = currentTool == PaintTool.BRUSH,
                         icon = Icons.Default.Brush,
-                        iconContentDescription = "brush"
+                        iconContentDescription = "brush",
+                        buttonModifier = Modifier.testTag("brushButton")
+
                     )
 
                     ToolButton(
                         onClick = { viewmodel.setTool(PaintTool.FILL) },
                         isSelected = currentTool == PaintTool.FILL,
                         icon = Icons.Default.FormatColorFill,
-                        iconContentDescription = "fill"
+                        iconContentDescription = "fill",
+                        buttonModifier = Modifier.testTag("fillButton")
+
                     )
 
                     ToolButton(
@@ -483,7 +491,9 @@ fun NewPaintingScreen(
                         isSelected = currentTool == PaintTool.ERASER,
                         icon = Icons.Default.Folder,
                         iconContentDescription = "fill",
-                        iconModifier = Modifier.rotate(-90f)
+                        iconModifier = Modifier.rotate(-90f),
+                        buttonModifier = Modifier.testTag("eraserButton")
+
                     )
 
                     Box(modifier = Modifier.weight(1f))

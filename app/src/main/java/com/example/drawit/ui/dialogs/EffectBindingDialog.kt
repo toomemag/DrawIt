@@ -28,9 +28,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.drawit.painting.Layer
-import com.example.drawit.painting.LayerEffectBinding
-import com.example.drawit.painting.LayerTransformInput
+import com.example.drawit.domain.model.Layer
+import com.example.drawit.domain.model.LayerEffectBinding
+import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.painting.effects.BaseEffect
 import com.example.drawit.ui.components.painting.EffectBindingListItem
 import com.example.drawit.utils.darken
@@ -74,19 +74,21 @@ fun EffectBindingDialog(
         ) {
             Text(
                 text=effect.getEffectName(),
-                style=MaterialTheme.typography.displayMedium,
-                color=MaterialTheme.colorScheme.onSurface,
+                style=MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Text(
                 text=effect.getEffectDescription(),
-                style=MaterialTheme.typography.bodyMedium,
+                style=MaterialTheme.typography.bodyLarge,
                 color=MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 10.dp)
+                    .padding(bottom = 10.dp),
+                textAlign = TextAlign.Center
             )
 
             // without container with rounding, scroll forces

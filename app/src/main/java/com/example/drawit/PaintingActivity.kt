@@ -20,6 +20,7 @@ import com.example.drawit.ui.theme.DrawitTheme
 import com.example.drawit.ui.viewmodels.NewPaintingVMFactory
 import com.example.drawit.ui.viewmodels.NewPaintingViewModel
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class PaintingActivity: ComponentActivity(), SensorEventListener {
@@ -32,6 +33,19 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val app = application as DrawItApplication
+        val paintingsRepository = app.paintingsRepository
+        val paintingId = intent.getStringExtra("paintingId")
+
+        viewmodel = ViewModelProvider(
+            this@PaintingActivity,
+            NewPaintingVMFactory(
+                effectManager = effectManager,
+                paintingsRepository = paintingsRepository,
+                initialPainting = null
+            )
+        )[NewPaintingViewModel::class]
+
         viewmodel._test_onPauseFromParent = {
             onPause()
         }
@@ -39,19 +53,26 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
             onResume()
         }
 
-        lifecycleScope.launch {
-            viewmodel.paintingSubmitResult.collectLatest { result ->
-                result?.onSuccess { id ->
-                    android.util.Log.d("PaintingSubmit", "painting submitted withid $id")
-                }?.onFailure { err ->
-                    android.util.Log.e("PaintingSubmit", "painting submit failed: ${err.localizedMessage}")
-                }
-            }
+        onBackPressedDispatcher.addCallback(this) {
+            viewmodel.pausePainting()
         }
 
         lifecycleScope.launch {
-            viewmodel.layers.collectLatest {
+            val initialPainting = if (paintingId?.isNotEmpty() == true) {
+                paintingsRepository.getPaintingById(paintingId).firstOrNull()
+            } else {
+                null
+            }
 
+            if (initialPainting != null)
+                viewmodel.setActivePainting(initialPainting)
+
+            viewmodel.paintingSubmitResult.collectLatest { result ->
+                result?.onSuccess { id ->
+                    android.util.Log.d("PaintingSubmit", "painting submitted with id $id")
+                }?.onFailure { err ->
+                    android.util.Log.e("PaintingSubmit", "painting submit failed: ${err.localizedMessage}")
+                }
             }
         }
 
@@ -93,18 +114,21 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        viewmodel.registerSensorListeners(this)
+
+        if (::viewmodel.isInitialized)
+            viewmodel.registerSensorListeners(this)
     }
 
     override fun onPause() {
         super.onPause()
-        viewmodel.unregisterSensorListeners(this)
+        if (::viewmodel.isInitialized)
+            viewmodel.unregisterSensorListeners(this)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
     override fun onSensorChanged(event: SensorEvent?) {
         android.util.Log.d("PaintingActivity", "onSensorChanged - sensor event received ${event.toString()}")
-        if (event != null) viewmodel.onSensorEvent(event)
+        if (event != null && ::viewmodel.isInitialized) viewmodel.onSensorEvent(event)
     }
 }

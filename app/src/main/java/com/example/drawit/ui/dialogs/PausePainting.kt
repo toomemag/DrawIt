@@ -27,6 +27,7 @@ import com.example.drawit.utils.darken
 fun PausePainting(
     onSaveAndExit: () -> Unit = { },
     onBackToPainting: () -> Unit = { },
+    hasDrawn: Boolean = false
 ) {
     DrawitTheme {
         Dialog(
@@ -68,7 +69,7 @@ fun PausePainting(
                     )
                 ) {
                     Text(
-                        text = "Save & Exit",
+                        text = if (hasDrawn) "Save & Exit" else "Exit",
                         style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.surface,
                     )

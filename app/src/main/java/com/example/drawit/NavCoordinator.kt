@@ -4,8 +4,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
 sealed interface NavEvent {
-    data class ToPaintingDetail(val paintingId: String) : NavEvent
+    object ToMainView : NavEvent
     object ToNewPainting : NavEvent
+    data class ToPaintingDetail(val paintingId: String) : NavEvent
     object Back : NavEvent
 }
 

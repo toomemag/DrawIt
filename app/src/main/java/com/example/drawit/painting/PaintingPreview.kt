@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
+import com.example.drawit.domain.model.Layer
 
 /**
  * Custom view extending Canvas for rendering a painting preview.

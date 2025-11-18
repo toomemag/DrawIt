@@ -11,14 +11,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(255, 255, 255, 255),
-    secondary = Color(200, 200, 200, 255),
-    tertiary = Color(150, 150, 150, 255),
+    // primary action buttons
+    primary = Color(0xFF6D9BFF),
+    onPrimary = Color(0xFF0C1A33),
 
-    background = Color(38, 38, 38, 255),
-    surface = Color(23, 23, 23, 255),
+    // light blue buttons (secondary actions)
+    secondary = Color(0xFF8FB0FF),
+    onSecondary = Color(0xFF0D1526),
 
-    onBackground = Color(0x40FFFFFF)
+    // cancel buttons / neutral actions
+    tertiary = Color(0xFF3A3A3A),
+    onTertiary = Color(0xFFE0E0E0),
+
+    // main background
+    background = Color(0xFF121212),
+    // border, text directly on background
+    onBackground = Color(0xEB777777),
+
+    // dialogs
+    surface = Color(0xFF2A2A2A),
+    // dialog text
+    onSurface = Color(0xFFECECEC),
+    // dialog text description
+    onSurfaceVariant = Color(0xFFB3B3B3),
+
+    // paint tools
+    primaryContainer = Color(0xFF2B2F3A),
+    onPrimaryContainer = Color(0xFF9EC0FF),
+    secondaryContainer = Color(0xFF1F2530),
+    onSecondaryContainer = Color(0xFFB5C8FF),
+
+    error = Color(0xFFCF6679),
+    onError = Color(0xFF1A0C0C),
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -58,7 +82,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun DrawitTheme(
-    darkTheme: Boolean = false, // isSystemInDarkTheme(),
+    darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
