@@ -1,61 +1,25 @@
-package com.example.drawit.painting
+package com.example.drawit.domain.model
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Rect
 import android.util.Base64
 import androidx.core.graphics.createBitmap
 import com.example.drawit.painting.effects.BaseEffect
 
-/**
- * Represents a layer transform input option
- * Used in LayerEffectBinding to map effect outputs to layer transform inputs
- * eg. map gyro yaw to layer x position
- */
-enum class LayerTransformInput {
-    X_POS,
-    Y_POS,
-    ROTATION,
-    SCALE
-}
-
-/**
- * Binds an effect output to a layer transform input
- * @param effectOutputIndex The index of the effect output to bind
- * @param layerTransformInput The layer transform input to bind to
- */
-data class LayerEffectBinding(
-    var effectOutputIndex: Int,
-    var layerTransformInput: LayerTransformInput,
-)
-
-/**
- * Represents a drawable layer with effects
- * @param name The name of the layer, used for debugging
- *
- * @property bitmap: The bitmap representing the layer's pixel data
- * @property isActive: Whether the layer is active (paintable)
- * @property offset: The x and y offset of the layer (for transforming position)
- * @property effectBindings: A map of effect type to list of LayerEffectBindings
- * @property paint: The Paint object used for drawing the layer
- */
-// debug name more than anything
-class Layer(var name: String = "Layer") {
-    var bitmap: Bitmap = createBitmap(128, 128)
-
-    var isActive: Boolean = true
-    var offset: Array<Int> = arrayOf(0, 0)
-
-    val effectBindings: MutableMap<Int, MutableList<LayerEffectBinding>> = mutableMapOf()
-
-    var lastUpdatedTimestamp: Long = 0
-
+data class Layer(
+    var bitmap: Bitmap = createBitmap(128, 128),
+    var isActive: Boolean = true,
+    var offset: Array<Int> = arrayOf(0, 0),
+    val effectBindings: MutableMap<Int, MutableList<LayerEffectBinding>> = mutableMapOf(),
+    var lastUpdatedTimestamp: Long = 0,
     // paint with no anti-aliasing or bitmap filtering for pixel art style
-    var paint = android.graphics.Paint().apply {
+    var paint: Paint = Paint().apply {
         isAntiAlias = false
         isFilterBitmap = false
     }
-
+) {
     /**
      * Sets the position offset of the layer
      * @param x The x offset

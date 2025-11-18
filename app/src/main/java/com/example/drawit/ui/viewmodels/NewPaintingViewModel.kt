@@ -9,10 +9,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.set
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.drawit.domain.model.Layer
+import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.painting.CanvasManager
 import com.example.drawit.painting.CanvasView
-import com.example.drawit.painting.Layer
-import com.example.drawit.painting.LayerTransformInput
 import com.example.drawit.painting.PaintTool
 import com.example.drawit.painting.effects.BaseEffect
 import com.example.drawit.painting.effects.EffectManager

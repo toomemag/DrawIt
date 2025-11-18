@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.View
+import com.example.drawit.domain.model.Layer
 
 /**
  * Custom view for rendering a canvas with multiple layers. Each layer can have

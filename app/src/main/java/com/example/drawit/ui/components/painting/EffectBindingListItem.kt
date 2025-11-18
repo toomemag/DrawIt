@@ -18,8 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.drawit.painting.LayerEffectBinding
-import com.example.drawit.painting.LayerTransformInput
+import com.example.drawit.domain.model.LayerEffectBinding
+import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.painting.effects.BaseEffect
 
 @Composable
