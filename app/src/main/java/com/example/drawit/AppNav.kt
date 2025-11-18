@@ -26,6 +26,7 @@ fun AppNav(
 ) {
     val navController = rememberNavController()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val ctx = LocalContext.current
     // todo: auth later, step 5
     val startDestination = true.let { if (it) Screen.MainScreen.route else Screen.LoginScreen.route }
 
@@ -40,7 +41,15 @@ fun AppNav(
                         navController.navigate("new_painting")
                     }
                     is NavEvent.Back -> {
-                        navController.popBackStack()
+                        val activity = ctx as? PaintingActivity
+
+                        // in paitnignactivity, call to show dialog
+                        if (activity != null) {
+                            activity.onBackPressedDispatcher.onBackPressed()
+                        } else {
+                            // else just pop view stack
+                            navController.popBackStack()
+                        }
                     }
                     is NavEvent.ToMainView -> {
                         navController.navigate(Screen.MainScreen.route) {

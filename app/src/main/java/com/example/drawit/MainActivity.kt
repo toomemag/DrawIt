@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
                         FloatingActionButton(
                             onClick = Intent(this@MainActivity, PaintingActivity::class.java).let { intent ->
                                 {
-                                    startActivity(intent)
+                                    app.navCoordinator.toNewPainting()
                                 }
                             }
                         ) {
@@ -79,13 +81,20 @@ class MainActivity : ComponentActivity() {
                                 .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 20.dp )
                         )
                     }
-                ) { }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 10.dp)
+                    ) {
+                        AppNav(
+                            navCoordinator = app.navCoordinator,
+                            paintingsRepository = app.paintingsRepository,
+                            selectedTab = selectedTab,
+                        )
+                    }
 
-                AppNav(
-                    navCoordinator = app.navCoordinator,
-                    paintingsRepository = app.paintingsRepository,
-                    selectedTab = selectedTab,
-                )
+                }
             }
         }
     }

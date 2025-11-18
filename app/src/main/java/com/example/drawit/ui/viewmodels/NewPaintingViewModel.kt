@@ -9,8 +9,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.set
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.drawit.data.local.room.repository.PaintingsRepository
 import com.example.drawit.domain.model.Layer
 import com.example.drawit.domain.model.LayerTransformInput
+import com.example.drawit.domain.model.Painting
 import com.example.drawit.painting.CanvasManager
 import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.PaintTool
@@ -20,6 +22,7 @@ import com.example.drawit.painting.effects.GyroscopeEffect
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -40,10 +43,13 @@ enum class CanvasGestureState {
 }
 
 class NewPaintingViewModel(
-    // null so we can have previews
-    val effectManager: EffectManager? = null
+    val effectManager: EffectManager? = null,
+    private val paintingsRepository: PaintingsRepository,
+    initialPainting: Painting? = null
 ) : ViewModel( ) {
-    private val canvasManager = CanvasManager()
+    private val canvasManager = CanvasManager(
+        painting = initialPainting
+    )
     private val effectContext = effectManager?.createContext()
 
     private val _layers = MutableStateFlow<List<Layer>>(emptyList())
@@ -57,7 +63,7 @@ class NewPaintingViewModel(
     private val _selectedColor = MutableStateFlow(Color(0xFFFFFFFF.toInt()))
     val selectedColor = _selectedColor.asStateFlow()
 
-    private val _timeElapsedSeconds = MutableStateFlow(0)
+    private val _timeElapsedSeconds = MutableStateFlow(canvasManager.getPainting().timeTaken)
     val timeElapsedSeconds = _timeElapsedSeconds.asStateFlow()
 
     private val _paintingSubmitResult = MutableSharedFlow<Result<String>?>(replay = 0)
@@ -68,6 +74,8 @@ class NewPaintingViewModel(
 
     private var _currentTool = MutableStateFlow(canvasManager.getTool())
     val currentTool = _currentTool.asStateFlow()
+
+    private var hasPainted = false
 
 
     private val _isColorpickerOpen = MutableStateFlow(false)
@@ -110,6 +118,13 @@ class NewPaintingViewModel(
     @SuppressLint("StaticFieldLeak")
     private var canvasViewRef: CanvasView? = null
 
+    fun setActivePainting(painting: Painting) {
+        _timeElapsedSeconds.value = painting.timeTaken
+        canvasManager.setPainting(painting)
+        _activeLayerIndex.value = null
+        updatePreviewsAndSyncLayersToState()
+        canvasManager.setActiveLayer(activeLayerIndex.value)
+    }
     fun openColorpicker() { _isColorpickerOpen.value = true }
     fun closeColorpicker() { _isColorpickerOpen.value = false }
 
@@ -121,6 +136,19 @@ class NewPaintingViewModel(
 
     fun openBindingDialog(effect: BaseEffect<*>) { _editBindingDialog.value = effect }
     fun closeBindingDialog() { _editBindingDialog.value = null }
+    fun hasDrawn() = hasPainted
+
+    fun savePaintingToLocalDatabase() {
+        if ( !hasPainted ) return
+
+        canvasManager.getPainting().timeTaken = timeElapsedSeconds.value
+
+        viewModelScope.launch {
+            paintingsRepository.upsertPainting(
+                canvasManager.getPainting()
+            )
+        }
+    }
 
     fun getAvailableEffects(): List<BaseEffect<*>> { return effectManager?.getEffects()?.toList() ?: emptyList() }
 
@@ -188,19 +216,21 @@ class NewPaintingViewModel(
         // invalidate layers for selected layer to show up on init
         syncLayersToState()
 
-        val timer = Timer( )
-        timer.scheduleAtFixedRate(object : TimerTask( ) {
-            override fun run( ) {
-                viewModelScope.launch(Dispatchers.Main) {
-                    val timeSincePaused = if (isPaused.value) System.currentTimeMillis() - lastPausedTime!! else 0L
+        // https://stackoverflow.com/a/70876079
+        viewModelScope.launch(Dispatchers.Default) {
+            while ( true ) {
+                val timeSincePaused = if (isPaused.value) System.currentTimeMillis() - lastPausedTime!! else 0L
 
-                    val currentTime = System.currentTimeMillis() - timeSincePaused
-                    val timeDiffSeconds = ( currentTime - startTime ) / 1000
+                val currentTime = System.currentTimeMillis() - timeSincePaused
+                val timeDiffSeconds = ( currentTime - startTime ) / 1000
 
-                    _timeElapsedSeconds.value = timeDiffSeconds.toInt()
+                withContext(Dispatchers.Main) {
+                    _timeElapsedSeconds.value = timeDiffSeconds + canvasManager.getPainting().timeTaken
                 }
+
+                delay(1000L)
             }
-        }, 0, 1000)
+        }
     }
 
     // same as syncLayersToView before, instead now we set state
@@ -292,6 +322,8 @@ class NewPaintingViewModel(
      * @param layerPos The position on the layer bitmap to paint at as a pair (x, y)
      */
     fun paintAt(layerIndex: Int, layerPos: Pair<Int, Int>, isPointerDown: Boolean = true) {
+        hasPainted = true
+
         val layer = canvasManager.getLayer(layerIndex) ?: return
 
         // same dispatcher as from API example

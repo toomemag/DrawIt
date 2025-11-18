@@ -24,33 +24,40 @@ enum class PaintTool {
  */
 class CanvasManager(
     // can be init from drafts (aka DAO)
-    private val painting: Painting = Painting(
-        theme = "Theme<TODO>",
-        mode = "freemode__or__thememode<TODO>"
-    )
+    private var painting: Painting? = null
 ) {
     private var paintColor: Int = 0xFF000000.toInt()
     private var brushSize: Int = 1
     private var currentTool: PaintTool = PaintTool.PEN
 
     init {
+        if (painting == null)
+            painting = Painting(
+                id = "",
+                theme = "Theme<TODO>",
+                mode = "Freemode<TODO>",
+            )
         // initialize with one layer
-        painting.layers.add(
+        painting!!.layers.add(
             Layer()
         )
+    }
+    fun setPainting( newPainting: Painting ) {
+        painting = newPainting
     }
 
     fun getTool( ): PaintTool { return currentTool }
     fun getBrushSize( ): Int { return brushSize }
     fun setTool( tool: PaintTool ) { currentTool = tool }
     fun setBrushSize( size: Int ) { brushSize = size }
+    fun getPainting( ): Painting { return painting!! }
 
     /**
      * Sets the active layer by index. If index is null, all layers are deactivated.
      * @param index The index of the layer to activate, or null to deactivate all layers
      */
     fun setActiveLayer(index: Int?) {
-        val layers = painting.layers
+        val layers = painting!!.layers
         if (index == null) {
             // disable all layers
             for (layer in layers) layer.isActive = false
@@ -66,7 +73,7 @@ class CanvasManager(
      * @return The index of the active layer, or -1 if no layer is active
      */
     fun getActiveLayerIndex(): Int? {
-        val layers = painting.layers
+        val layers = painting!!.layers
         for (layerIdx in layers.indices) {
             if (layers[layerIdx].isActive) {
                 return layerIdx
@@ -79,14 +86,14 @@ class CanvasManager(
      * Gets a copy of the list of layers.
      * @return A list of layers
      */
-    fun getLayers(): List<Layer> = painting.layers.toList()
+    fun getLayers(): List<Layer> = painting!!.layers.toList()
 
     /**
      * Adds a new layer to the canvas.
      * @param layer The layer to add
      */
     fun addLayer(layer: Layer) {
-        painting.layers.add(layer)
+        painting!!.layers.add(layer)
     }
 
     /**
@@ -94,7 +101,7 @@ class CanvasManager(
      * @param name The name of the new layer
      */
     fun addLayer(name: String) {
-        painting.layers.add(Layer(
+        painting!!.layers.add(Layer(
 
         ))
     }
@@ -104,7 +111,7 @@ class CanvasManager(
      * @param layer The layer to remove
      */
     fun removeLayer(layer: Layer) {
-        painting.layers.remove(layer)
+        painting!!.layers.remove(layer)
     }
 
     /**
@@ -123,7 +130,7 @@ class CanvasManager(
      * @param index The index of the layer to get
      * @return The layer at the specified index, or null if index is out of bounds
      */
-    fun getLayer(index: Int): Layer? = painting.layers.getOrNull(index)
+    fun getLayer(index: Int): Layer? = painting!!.layers.getOrNull(index)
 
     /**
      * Sets the current paint color.
@@ -216,7 +223,7 @@ class CanvasManager(
             "size" to 128,
             "theme" to "Theme<TODO>",
             "mode" to "free_mode<TODO>",
-            "layers" to painting.layers.map { layer -> layer.serializeForFirebase() }
+            "layers" to painting!!.layers.map { layer -> layer.serializeForFirebase() }
         )
     }
 }

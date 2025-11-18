@@ -9,6 +9,7 @@ import androidx.core.graphics.createBitmap
 import com.example.drawit.painting.effects.BaseEffect
 
 data class Layer(
+    val id: String = "",
     var bitmap: Bitmap = createBitmap(128, 128),
     var isActive: Boolean = true,
     var offset: Array<Int> = arrayOf(0, 0),

@@ -13,6 +13,10 @@ var drawnFont = FontFamily(
 )
 
 val Typography = Typography(
+    headlineLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 40.sp),
+    headlineMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 32.sp),
+    headlineSmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 24.sp),
+
     displayLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 52.sp),
     displayMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 40.sp),
     displaySmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 28.sp),

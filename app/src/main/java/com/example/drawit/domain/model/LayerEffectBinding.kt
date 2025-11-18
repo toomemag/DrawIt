@@ -6,6 +6,8 @@ package com.example.drawit.domain.model
  * @param layerTransformInput The layer transform input to bind to
  */
 data class LayerEffectBinding(
+    val id: String = "",
+    val layerId: String = "",
     var effectOutputIndex: Int,
     var layerTransformInput: LayerTransformInput,
 )

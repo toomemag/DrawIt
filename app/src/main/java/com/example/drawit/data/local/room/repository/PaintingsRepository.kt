@@ -23,6 +23,12 @@ class PaintingsRepository (
     }
 
     suspend fun upsertPainting(painting: Painting) {
+        android.util.Log.d( "PaintingsRepository", "upsertPainting - painting<" +
+                "size=${painting.size}, " +
+                "#layers=${painting.layers.size}, " +
+                "timeTaken=${painting.timeTaken}, " +
+                "theme=${painting.theme}, " +
+                "mode=${painting.mode}>" )
         val paintingWithLayers = painting.toEntityWithRelations()
         paintingDao.upsertPaintingWithLayers(paintingWithLayers)
     }

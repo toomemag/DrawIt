@@ -73,11 +73,9 @@ import com.example.drawit.utils.invert
 import com.example.drawit.utils.modify
 
 
-@Preview
 @Composable
 fun NewPaintingScreen(
-    // for preview
-    viewmodel: NewPaintingViewModel = remember { NewPaintingViewModel() },
+    viewmodel: NewPaintingViewModel,
     modifier: Modifier = Modifier.fillMaxSize(),
     canvasSizeDp: Dp  = 380.dp,
 
@@ -129,8 +127,10 @@ fun NewPaintingScreen(
             when (isPaintingPaused) {
                 true -> {
                     PausePainting(
+                        hasDrawn = viewmodel.hasDrawn(),
                         onSaveAndExit = {
-                            // todo: save to localStorage
+                            viewmodel.savePaintingToLocalDatabase()
+
                             onPostSaveAndExit()
                         },
                         onBackToPainting = {
@@ -175,7 +175,7 @@ fun NewPaintingScreen(
                         android.util.Log.d("NewPaintingScreen", "isNewEffectDialogOpen - active layer is null, closing dialog")
                         viewmodel.closeNewEffectDialog()
                     } else {
-                        val activeLayer = layers[viewmodel.activeLayerIndex.value!!]
+                        val activeLayer = layers[activeIndex!!]
 
                         // get all types we already have for layer
                         val bindings = activeLayer.effectBindings
@@ -228,6 +228,7 @@ fun NewPaintingScreen(
                     }
                 } else -> {}
             }
+
 //        AndroidView(factory = { ctx ->
 //            GridBackgroundView(ctx).apply {
 //                layoutParams = ViewGroup.LayoutParams(
