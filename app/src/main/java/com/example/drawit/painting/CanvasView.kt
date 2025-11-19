@@ -82,6 +82,9 @@ class CanvasView(context: Context, attrs: AttributeSet? = null) : View(context, 
             bitmapScaleRect.bottom = layer.offset[1] + height
 
             paint.alpha = if (layer.isActive) 255 else globalAlpha
+            if (!anySelected) {
+                paint.alpha = (255 * layer.globalAlpha).toInt()
+            }
             canvas.drawBitmap(layer.bitmap, null, bitmapScaleRect, paint)
         }
     }

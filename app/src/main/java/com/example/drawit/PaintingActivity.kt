@@ -7,12 +7,14 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.addCallback
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.drawit.painting.effects.EffectManager
 import com.example.drawit.ui.screens.NewPaintingScreen
@@ -24,9 +26,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class PaintingActivity: ComponentActivity(), SensorEventListener {
-    private val viewmodel: NewPaintingViewModel by viewModels {
-        NewPaintingVMFactory(effectManager)
-    }
+    private lateinit var viewmodel: NewPaintingViewModel
+
     val effectManager: EffectManager by lazy { EffectManager(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {

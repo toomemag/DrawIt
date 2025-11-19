@@ -8,6 +8,12 @@ import android.util.Base64
 import androidx.core.graphics.createBitmap
 import com.example.drawit.painting.effects.BaseEffect
 
+fun toFloatSafe(value: Any?): Float = when (value) {
+    is Number -> value.toFloat()
+    is String -> value.toFloatOrNull() ?: 0f
+    else -> 0f
+}
+
 data class Layer(
     val id: String = "",
     var bitmap: Bitmap = createBitmap(128, 128),
@@ -19,7 +25,8 @@ data class Layer(
     var paint: Paint = Paint().apply {
         isAntiAlias = false
         isFilterBitmap = false
-    }
+    },
+    var globalAlpha: Float = 1.0f,
 ) {
     /**
      * Sets the position offset of the layer
@@ -81,18 +88,26 @@ data class Layer(
         when(inputMode) {
             LayerTransformInput.X_POS -> {
                 // todo: better types :sob:
-                val transformed = (effectTransformResult as Float).toInt()
+                val transformed = toFloatSafe(effectTransformResult as Any).toInt()
                 if ( !accumulate )
                     offset[0] = transformed
                 else
                     offset[0] += transformed
             }
             LayerTransformInput.Y_POS -> {
-                val transformed = (effectTransformResult as Float).toInt()
+                val transformed = toFloatSafe(effectTransformResult as Any).toInt()
                 if ( !accumulate )
                     offset[1] = transformed
                 else
                     offset[1] += transformed
+            }
+            LayerTransformInput.ALPHA -> {
+                val transformed = toFloatSafe(effectTransformResult as Any).coerceIn(0f, 1f)
+                if ( !accumulate ) {
+                    globalAlpha = transformed
+                } else {
+                    globalAlpha = (globalAlpha + transformed).coerceIn(0f, 1f)
+                }
             }
             else -> {
                 // other input modes not implemented yet
