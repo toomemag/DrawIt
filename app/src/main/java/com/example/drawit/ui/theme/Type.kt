@@ -13,23 +13,23 @@ var drawnFont = FontFamily(
 )
 
 val Typography = Typography(
-    headlineLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 40.sp),
-    headlineMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 32.sp),
-    headlineSmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 24.sp),
+    headlineLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 45.sp),
+    headlineMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 37.sp),
+    headlineSmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.SemiBold, fontSize = 35.sp),
 
-    displayLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 52.sp),
-    displayMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 40.sp),
-    displaySmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 28.sp),
+    displayLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 40.sp),
+    displayMedium = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 45.sp),
+    displaySmall = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal, fontSize = 35.sp),
 
-    titleLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 32.sp),
-    titleMedium = TextStyle(fontFamily = drawnFont),
-    titleSmall = TextStyle(fontFamily = drawnFont),
+    titleLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Bold, fontSize = 30.sp),
+    titleMedium = TextStyle(fontFamily = drawnFont, fontSize = 26.sp),
+    titleSmall = TextStyle(fontFamily = drawnFont, fontSize = 23.sp),
 
     bodyLarge = TextStyle(fontFamily = drawnFont, fontWeight = FontWeight.Normal),
-    bodyMedium = TextStyle(fontFamily = drawnFont),
-    bodySmall = TextStyle(fontFamily = drawnFont),
+    bodyMedium = TextStyle(fontFamily = drawnFont, fontSize = 26.sp),
+    bodySmall = TextStyle(fontFamily = drawnFont, fontSize = 23.sp),
 
-    labelLarge = TextStyle(fontFamily = drawnFont),
-    labelMedium = TextStyle(fontFamily = drawnFont),
-    labelSmall = TextStyle(fontFamily = drawnFont)
+    labelLarge = TextStyle(fontFamily = drawnFont, fontSize = 30.sp),
+    labelMedium = TextStyle(fontFamily = drawnFont, fontSize = 26.sp),
+    labelSmall = TextStyle(fontFamily = drawnFont, fontSize = 23.sp)
 )

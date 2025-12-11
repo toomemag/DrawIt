@@ -268,7 +268,7 @@ fun NewPaintingScreen(
 
                         Text(
                             text = "Theme",
-                            fontSize = 24.sp,
+                            fontSize = 30.sp,
                             modifier = Modifier.padding(start = 8.dp),
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -288,7 +288,7 @@ fun NewPaintingScreen(
                             timeElapsedSeconds / 60,
                             timeElapsedSeconds % 60
                         ),
-                        fontSize = 24.sp,
+                        fontSize = 30.sp,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         style = MaterialTheme.typography.bodyLarge
                     )
