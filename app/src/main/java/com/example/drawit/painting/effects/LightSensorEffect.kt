@@ -3,6 +3,7 @@ package com.example.drawit.painting.effects
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent
+import android.util.Log
 
 class LightSensorEffect @JvmOverloads constructor(
     sensor: Sensor,
@@ -13,6 +14,7 @@ class LightSensorEffect @JvmOverloads constructor(
 ) : BaseEffect<Float>(sensor, name, description, inputOptions) {
     // Stores the most recent light sensor value.
     private var illuminance: Float = 0f
+
     /**
      * Translates a light sensor event into a single illuminance value.
      * @param sensorEvent The sensor event to translate.
@@ -20,6 +22,7 @@ class LightSensorEffect @JvmOverloads constructor(
      */
     override fun translateSensorEvent(sensorEvent: SensorEvent): List<Float> {
         illuminance = sensorEvent.values[0]
+        illuminance = illuminance*0.02f // A big number, gonna tune it down
         return listOf(illuminance)
     }
 
