@@ -190,7 +190,7 @@ fun EffectBindingDialog(
             ) {
                 Text(
                     text = "Remove Effect",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         }

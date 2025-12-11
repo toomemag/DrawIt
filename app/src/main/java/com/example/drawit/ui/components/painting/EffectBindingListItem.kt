@@ -43,7 +43,7 @@ fun EffectBindingListItem(
         ) {
             Text(
                 text = effectOuputOptions[binding.effectOutputIndex],
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -77,7 +77,7 @@ fun EffectBindingListItem(
         ) {
             Text(
                 text = binding.layerTransformInput.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
