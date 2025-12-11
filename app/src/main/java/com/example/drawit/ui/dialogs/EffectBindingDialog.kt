@@ -83,7 +83,7 @@ fun EffectBindingDialog(
 
             Text(
                 text=effect.getEffectDescription(),
-                style=MaterialTheme.typography.bodyLarge,
+                style=MaterialTheme.typography.labelMedium,
                 color=MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -190,7 +190,7 @@ fun EffectBindingDialog(
             ) {
                 Text(
                     text = "Remove Effect",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         }

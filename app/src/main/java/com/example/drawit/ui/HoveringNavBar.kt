@@ -48,6 +48,7 @@ private fun NavItem(
 
         Text(
             text = label,
+            fontSize = MaterialTheme.typography.labelSmall.fontSize,
             color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 4.dp)
         )
