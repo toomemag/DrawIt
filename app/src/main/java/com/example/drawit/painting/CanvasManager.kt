@@ -1,17 +1,22 @@
 package com.example.drawit.painting
 
 
+
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.ColorUtils
+import android.graphics.Bitmap
 import com.example.drawit.domain.model.Layer
 import com.example.drawit.domain.model.Painting
+import com.example.drawit.painting.Commands.BitmapChangeCommand
+import com.example.drawit.painting.Commands.UndoableCommand
 import java.util.LinkedList
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import java.util.Queue
+import java.util.Stack
 
 enum class PaintTool {
     PEN, BRUSH, FILL, ERASER
@@ -33,6 +38,9 @@ class CanvasManager(
     private var paintColor: Int = 0xFF000000.toInt()
     private var brushSize: Int = 1
     private var currentTool: PaintTool = PaintTool.PEN
+
+    private val undoStack = Stack<UndoableCommand>()
+    private val redoStack = Stack<UndoableCommand>()
 
     init {
         if (painting == null)
@@ -184,50 +192,74 @@ class CanvasManager(
      * @param x,y, the coordinates to fill from
      */
     fun fill(x: Int, y : Int) {
-        // 1. Get the active layer to draw on.
         val activeLayerIndex = getActiveLayerIndex() ?: return
         val layer = getLayer(activeLayerIndex) ?: return
         val bitmap = layer.bitmap
 
-        // 2. Boundary Check: Make sure the starting point is inside the bitmap.
-        if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) {
-            return
-        }
-
-        // 3. Get Target Color: This is the color of the pixel the user tapped.
-        val targetColor = bitmap.getPixel(x, y)
-
-        // 4. Get Fill Color: This is the currently selected paint color.
-        val fillColor = getColor() // Or however you get the current color, e.g., 'paintColor'
-
-        // 5. Early Exit: If the target area is already the correct color, do nothing.
-        if (targetColor == fillColor) {
-            return
-        }
-
-        // 6. Flood Fill Algorithm (using a Queue for Breadth-First Search)
-        val queue: Queue<Pair<Int, Int>> = LinkedList()
-        queue.add(Pair(x, y))
-
-        while (queue.isNotEmpty()) {
-            val (px, py) = queue.poll() ?: continue
-
-            // Check if the current pixel is within bounds
-            if (px < 0 || px >= bitmap.width || py < 0 || py >= bitmap.height) {
-                continue
+        val command = BitmapChangeCommand(bitmap) {
+            // 2. Boundary Check: Make sure the starting point is inside the bitmap.
+            if (x < 0 || x >= bitmap.width || y < 0 || y >= bitmap.height) {
+                return@BitmapChangeCommand
             }
 
-            // If the pixel's color is the one we want to replace...
-            if (bitmap.getPixel(px, py) == targetColor) {
-                // ...change its color to the new fill color...
-                bitmap.setPixel(px, py, fillColor)
+            // 3. Get Target Color: This is the color of the pixel the user tapped.
+            val targetColor = bitmap.getPixel(x, y)
 
-                // ...and add its four neighbors to the queue to be processed.
-                queue.add(Pair(px + 1, py)) // Right
-                queue.add(Pair(px - 1, py)) // Left
-                queue.add(Pair(px, py + 1)) // Bottom
-                queue.add(Pair(px, py - 1)) // Top
+            // 4. Get Fill Color: This is the currently selected paint color.
+            val fillColor = getColor() // Or however you get the current color, e.g., 'paintColor'
+
+            // 5. Early Exit: If the target area is already the correct color, do nothing.
+            if (targetColor == fillColor) {
+                return@BitmapChangeCommand
             }
+
+            // 6. Flood Fill Algorithm (using a Queue for Breadth-First Search)
+            val queue: Queue<Pair<Int, Int>> = LinkedList()
+            queue.add(Pair(x, y))
+
+            while (queue.isNotEmpty()) {
+                val (px, py) = queue.poll() ?: continue
+
+                // Check if the current pixel is within bounds
+                if (px < 0 || px >= bitmap.width || py < 0 || py >= bitmap.height) {
+                    continue
+                }
+
+                // If the pixel's color is the one we want to replace...
+                if (bitmap.getPixel(px, py) == targetColor) {
+                    // ...change its color to the new fill color...
+                    bitmap.setPixel(px, py, fillColor)
+
+                    // ...and add its four neighbors to the queue to be processed.
+                    queue.add(Pair(px + 1, py)) // Right
+                    queue.add(Pair(px - 1, py)) // Left
+                    queue.add(Pair(px, py + 1)) // Bottom
+                    queue.add(Pair(px, py - 1)) // Top
+                }
+            }
+        }
+        executeCommand(command)
+    }
+
+    fun executeCommand(command: UndoableCommand) {
+        command.execute()
+        undoStack.push(command)
+        redoStack.clear()
+    }
+
+    fun undo() {
+        if (undoStack.isNotEmpty()) {
+            val command = undoStack.pop()
+            command.undo()
+            redoStack.push(command)
+        }
+    }
+
+    fun redo() {
+        if (redoStack.isNotEmpty()) {
+            val command = redoStack.pop()
+            command.redo()
+            undoStack.push(command)
         }
     }
 
