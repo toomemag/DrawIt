@@ -287,14 +287,6 @@ fun NewPaintingScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    IconButton(onClick = { viewmodel.undo() }) {
-                        Icon(Icons.Default.Undo, contentDescription = "undo")
-                    }
-                    IconButton(onClick = { viewmodel.redo() }) {
-                        Icon(Icons.Default.Redo, contentDescription = "redo")
-                    }
-
                     Text(
                         text = String.format(
                             "%d:%02d",
@@ -333,6 +325,28 @@ fun NewPaintingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                Row(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    IconButton(
+                        onClick = { viewmodel.undo() },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(Color.White, RoundedCornerShape(8.dp))
+                    ) {
+                        Icon(Icons.Default.Undo, contentDescription = "undo", tint = Color.Black)
+                    }
+                    IconButton(
+                        onClick = { viewmodel.redo() },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(Color.White, RoundedCornerShape(8.dp))
+                    ) {
+                        Icon(Icons.Default.Redo, contentDescription = "redo", tint = Color.Black)
+                    }
+                }
+
                 // center canvas initially
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
