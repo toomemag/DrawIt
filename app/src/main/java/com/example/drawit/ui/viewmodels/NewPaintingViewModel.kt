@@ -16,6 +16,7 @@ import com.example.drawit.domain.model.Painting
 import com.example.drawit.painting.CanvasManager
 import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.PaintTool
+import com.example.drawit.painting.Commands.StrokeCommand
 import com.example.drawit.painting.effects.BaseEffect
 import com.example.drawit.painting.effects.EffectManager
 import com.example.drawit.painting.effects.GyroscopeEffect
@@ -110,6 +111,8 @@ class NewPaintingViewModel(
 
     // instead of 0 we have null (not paused state)
     private var lastPausedTime: Long? = null
+
+    private var bitmapBeforeStroke: Bitmap? = null
 
     var _test_onPauseFromParent: ( ) -> Unit = { }
     var _test_onResumeFromParent: ( ) -> Unit = { }
@@ -316,6 +319,19 @@ class NewPaintingViewModel(
         return Pair(bmpX, bmpY)
     }
 
+    fun startStroke(layerIndex: Int) {
+        val layer = canvasManager.getLayer(layerIndex) ?: return
+        bitmapBeforeStroke = layer.bitmap.copy(layer.bitmap.config!!, true)
+    }
+
+    fun endStroke(layerIndex: Int) {
+        val layer = canvasManager.getLayer(layerIndex) ?: return
+        val bitmapAfter = layer.bitmap.copy(layer.bitmap.config!!, true)
+        val command = StrokeCommand(layer.bitmap, bitmapBeforeStroke!!, bitmapAfter)
+        canvasManager.executeCommand(command)
+        bitmapBeforeStroke = null
+    }
+
     /**
      * Handle painting on the active layer
      * @param layerIndex The index of the layer to paint on
@@ -392,6 +408,16 @@ class NewPaintingViewModel(
     fun getLayerBitmap(layerIndex: Int): Bitmap? {
         val layer = canvasManager.getLayer(layerIndex) ?: return null
         return layer.bitmap
+    }
+
+    fun undo() {
+        canvasManager.undo()
+        updatePreviewsAndSyncLayersToState()
+    }
+
+    fun redo() {
+        canvasManager.redo()
+        updatePreviewsAndSyncLayersToState()
     }
 
 

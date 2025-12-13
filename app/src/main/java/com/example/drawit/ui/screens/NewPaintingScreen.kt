@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FormatColorFill
+import androidx.compose.material.icons.filled.Redo
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.FilledIconButton
@@ -45,6 +47,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +74,7 @@ import com.example.drawit.ui.viewmodels.NewPaintingViewModel
 import com.example.drawit.utils.dynamicLightenDarken
 import com.example.drawit.utils.invert
 import com.example.drawit.utils.modify
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -95,6 +99,7 @@ fun NewPaintingScreen(
     val isLayerEffectsOpen by viewmodel.isLayerEffectsDialogOpen.collectAsState()
     val isNewEffectDialogOpen by viewmodel.isNewEffectDialogOpen.collectAsState()
     val editBindingDialog by viewmodel.editBindingDialog.collectAsState()
+    val scope = rememberCoroutineScope()
 
     if (isSystemInDarkTheme()) {
         viewmodel.setColor(Color(0xFFffffff))
@@ -282,6 +287,14 @@ fun NewPaintingScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
+                    IconButton(onClick = { viewmodel.undo() }) {
+                        Icon(Icons.Default.Undo, contentDescription = "undo")
+                    }
+                    IconButton(onClick = { viewmodel.redo() }) {
+                        Icon(Icons.Default.Redo, contentDescription = "redo")
+                    }
+
                     Text(
                         text = String.format(
                             "%d:%02d",
@@ -295,7 +308,10 @@ fun NewPaintingScreen(
 
                     IconButton(
                         onClick = {
-
+                            scope.launch {
+                                viewmodel.submitPainting(timeElapsedSeconds.toInt())
+                                onPostSubmit()
+                            }
                         },
                     ) {
                         Icon(
@@ -384,6 +400,7 @@ fun NewPaintingScreen(
                                                     return@setOnTouchListener true
                                                 }
 
+                                                viewmodel.startStroke(activeLayerIdx)
                                                 viewmodel.setGestureState(CanvasGestureState.PAINTING)
                                                 viewmodel.setLastCanvasDrawPoint(bitmapPos)
 
@@ -416,11 +433,14 @@ fun NewPaintingScreen(
                                                             Pair(event.x.toInt(), event.y.toInt()),
                                                         )
 
-                                                    viewmodel.paintAt(
-                                                        activeLayerIdx,
-                                                        bitmapPos,
-                                                        false
-                                                    )
+                                                    if (viewmodel.currentTool.value != PaintTool.FILL) {
+                                                        viewmodel.paintAt(
+                                                            activeLayerIdx,
+                                                            bitmapPos,
+                                                            false
+                                                        )
+                                                        viewmodel.endStroke(activeLayerIdx)
+                                                    }
                                                 }
 
                                                 viewmodel.setGestureState(CanvasGestureState.IDLE)
