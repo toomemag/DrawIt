@@ -1,6 +1,10 @@
 package com.example.drawit.painting
 
 
+
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.ColorUtils
 import android.graphics.Bitmap
 import com.example.drawit.domain.model.Layer
 import com.example.drawit.domain.model.Painting
@@ -28,7 +32,8 @@ enum class PaintTool {
  */
 class CanvasManager(
     // can be init from drafts (aka DAO)
-    private var painting: Painting? = null
+    private var painting: Painting? = null,
+    private val isDarkMode: Boolean? = null
 ) {
     private var paintColor: Int = 0xFF000000.toInt()
     private var brushSize: Int = 1
@@ -46,8 +51,21 @@ class CanvasManager(
             )
         // initialize with one layer
         painting!!.layers.add(
-            Layer()
+            Layer().also {
+                if (isDarkMode == true){
+                    it.bitmap.eraseColor(0xFF000000.toInt()) }
+                else{
+                    it.bitmap.eraseColor(0xFFFFFFFF.toInt())
+
+                }
+
+
+
+            }
+
+
         )
+
     }
     fun setPainting( newPainting: Painting ) {
         painting = newPainting

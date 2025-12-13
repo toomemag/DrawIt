@@ -46,10 +46,14 @@ enum class CanvasGestureState {
 class NewPaintingViewModel(
     val effectManager: EffectManager? = null,
     private val paintingsRepository: PaintingsRepository,
-    initialPainting: Painting? = null
-) : ViewModel( ) {
+    initialPainting: Painting? = null ,
+    private val isDarkMode: Boolean? = null
+
+    ) : ViewModel( ) {
     private val canvasManager = CanvasManager(
-        painting = initialPainting
+        painting = initialPainting,
+        isDarkMode=isDarkMode
+
     )
     private val effectContext = effectManager?.createContext()
 

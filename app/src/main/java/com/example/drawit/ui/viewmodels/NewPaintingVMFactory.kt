@@ -9,12 +9,13 @@ import com.example.drawit.painting.effects.EffectManager
 class NewPaintingVMFactory(
     private val effectManager: EffectManager,
     private val paintingsRepository: PaintingsRepository,
-    private val initialPainting: Painting? = null
+    private val initialPainting: Painting? = null,
+    private val isDarkMode: Boolean?= null
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(NewPaintingViewModel::class.java)) {
-            return NewPaintingViewModel(effectManager, paintingsRepository, initialPainting) as T
+            return NewPaintingViewModel(effectManager, paintingsRepository, initialPainting,isDarkMode) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
