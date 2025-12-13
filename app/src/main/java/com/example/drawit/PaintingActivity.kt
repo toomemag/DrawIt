@@ -1,6 +1,7 @@
 package com.example.drawit
 
 import android.Manifest
+import android.content.res.Configuration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -37,13 +38,18 @@ class PaintingActivity: ComponentActivity(), SensorEventListener {
         val app = application as DrawItApplication
         val paintingsRepository = app.paintingsRepository
         val paintingId = intent.getStringExtra("paintingId")
+        val isDarkMode =
+            (resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK) ==
+                    Configuration.UI_MODE_NIGHT_YES
 
         viewmodel = ViewModelProvider(
             this@PaintingActivity,
             NewPaintingVMFactory(
                 effectManager = effectManager,
                 paintingsRepository = paintingsRepository,
-                initialPainting = null
+                initialPainting = null,
+                isDarkMode = isDarkMode
             )
         )[NewPaintingViewModel::class]
 
