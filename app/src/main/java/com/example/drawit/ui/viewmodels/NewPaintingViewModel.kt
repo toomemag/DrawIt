@@ -477,6 +477,10 @@ class NewPaintingViewModel(
         updatePreviewsAndSyncLayersToState()
     }
 
+    fun reorderLayers(from: Int, to: Int) {
+        canvasManager.reorderLayers(from, to)
+        updatePreviewsAndSyncLayersToState()
+    }
 
     /**
      * Update all layer effects, called when no layer is selected
