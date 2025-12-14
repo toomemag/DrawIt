@@ -389,6 +389,59 @@ class NewPaintingViewModel(
         }
 
     }
+    /**
+     * Handle erasing on the active layer
+     * @param layerIndex The index of the layer to erase on
+     * @param layerPos The position on the layer bitmap to erase at as a pair (x, y)
+     */
+    fun eraseAt(layerIndex: Int, layerPos: Pair<Int, Int>, isPointerDown: Boolean = true) {
+        hasPainted = true
+
+        val layer = canvasManager.getLayer(layerIndex) ?: return
+
+        // same dispatcher as from API example
+        // although this time we're not dealing with async
+        viewModelScope.launch(Dispatchers.Default) {
+            // if we we're in a constant drawing state, interpolate between last known point and current
+            if (drawingState.value == CanvasGestureState.PAINTING) {
+                val lastX = lastCanvasDrawPoint[0]
+                val lastY = lastCanvasDrawPoint[1]
+
+                // if its negative y, smaller x/y steps will be used -> causes gaps and defeats the whole purpose of lerping
+                val distX = abs(layerPos.first - lastX)
+                val distY = abs(layerPos.second - lastY)
+
+                // we have max steps as the longest distance we've travelled in either
+                // x or y axis
+                val steps = max(distX, distY)
+
+                for (i in 0..steps) {
+                    val t = if (steps == 0) 0f else i.toFloat() / steps.toFloat()
+                    val interpX = (1 - t) * lastX + t * layerPos.first
+                    val interpY = (1 - t) * lastY + t * layerPos.second
+
+                    layer.bitmap[interpX.toInt(), interpY.toInt()] = android.graphics.Color.TRANSPARENT
+                }
+            }
+
+            layer.bitmap[layerPos.first, layerPos.second] = android.graphics.Color.TRANSPARENT
+
+            lastCanvasDrawPoint[0] = layerPos.first
+            lastCanvasDrawPoint[1] = layerPos.second
+
+            android.util.Log.d( "Erasing", "eraseAt - erased at (${layerPos.first}, ${layerPos.second})" )
+
+            // update layer state
+            withContext(Dispatchers.Main) {
+                if (!isPointerDown) {
+                    updatePreviewsAndSyncLayersToState()
+                } else {
+                    syncLayersToState()
+                }
+            }
+        }
+
+    }
 
     /**
      * Fills an area on the active layer with the currently selected color.
