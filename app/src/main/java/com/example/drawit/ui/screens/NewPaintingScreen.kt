@@ -429,10 +429,21 @@ fun NewPaintingScreen(
                                                         Pair(event.x.toInt(), event.y.toInt()),
                                                     )
 
-                                                viewmodel.paintAt(
-                                                    activeLayerIdx,
-                                                    bitmapPos,
-                                                )
+                                                if(viewmodel.currentTool.value == PaintTool.ERASER){
+                                                    viewmodel.eraseAt(
+                                                        activeLayerIdx,
+                                                        bitmapPos
+                                                    )
+                                                }
+                                                else{
+                                                    viewmodel.paintAt(
+                                                        activeLayerIdx,
+                                                        bitmapPos,
+                                                    )
+                                                }
+
+
+
 
                                                 return@setOnTouchListener true
                                             }
@@ -447,12 +458,21 @@ fun NewPaintingScreen(
                                                             Pair(event.x.toInt(), event.y.toInt()),
                                                         )
 
+
                                                     if (viewmodel.currentTool.value != PaintTool.FILL) {
+                                                        if(viewmodel.currentTool.value == PaintTool.ERASER){
+                                                            viewmodel.eraseAt(
+                                                                activeLayerIdx,
+                                                                bitmapPos,
+                                                                isPointerDown = false
+                                                            )
+                                                        }
+                                                        else{
                                                         viewmodel.paintAt(
                                                             activeLayerIdx,
                                                             bitmapPos,
                                                             false
-                                                        )
+                                                        )}
                                                         viewmodel.endStroke(activeLayerIdx)
                                                     }
                                                 }
@@ -598,6 +618,7 @@ fun NewPaintingScreen(
                     }
 
                     for ((index, layer) in layers.withIndex()) {
+                        if (index!=0){
                         val borderColor =
                             if (index == activeIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
                         android.util.Log.d("NewPaintingScreen", "layer $index last updated (active=$activeIndex): ${layer.lastUpdatedTimestamp}")
@@ -632,7 +653,7 @@ fun NewPaintingScreen(
                                 )
                             }
                         }
-                    }
+                    }}
                 }
             }
         }

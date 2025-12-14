@@ -49,22 +49,20 @@ class CanvasManager(
                 theme = "Theme<TODO>",
                 mode = "Freemode<TODO>",
             )
-        // initialize with one layer
+        // initialize with two layers. One background, one painting.
         painting!!.layers.add(
             Layer().also {
                 if (isDarkMode == true){
                     it.bitmap.eraseColor(0xFF000000.toInt()) }
                 else{
                     it.bitmap.eraseColor(0xFFFFFFFF.toInt())
-
                 }
-
-
-
+                it.isActive=false
             }
-
-
         )
+        // painting layer
+        painting!!.layers.add(Layer())
+
 
     }
     fun setPainting( newPainting: Painting ) {
