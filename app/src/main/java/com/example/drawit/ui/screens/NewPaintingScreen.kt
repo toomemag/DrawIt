@@ -150,6 +150,10 @@ fun NewPaintingScreen(
                         onBackToPainting = {
                             viewmodel.resumePainting()
                         },
+                        onDiscardAndExit = {
+                            onPostSaveAndExit()
+                        }
+
                     )
                 }
 
