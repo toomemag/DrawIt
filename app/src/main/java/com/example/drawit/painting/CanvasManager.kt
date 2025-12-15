@@ -119,6 +119,11 @@ class CanvasManager(
         painting!!.layers.add(layer)
     }
 
+    fun reorderLayers(from: Int, to: Int) {
+        val layer = painting!!.layers.removeAt(from)
+        painting!!.layers.add(to, layer)
+    }
+
     /**
      * Adds a new layer with the specified name to the canvas.
      * @param name The name of the new layer

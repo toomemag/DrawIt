@@ -8,6 +8,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,18 +48,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -75,6 +83,7 @@ import com.example.drawit.utils.dynamicLightenDarken
 import com.example.drawit.utils.invert
 import com.example.drawit.utils.modify
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -597,57 +606,117 @@ fun NewPaintingScreen(
                     }
                 }
 
-                // layers
-                val scrollState = rememberScrollState()
-                Row(
-                    modifier = Modifier
-                        .horizontalScroll(scrollState),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                var draggedItem by remember { mutableStateOf<Int?>(null) }
+                var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
-                    IconButton(
-                        onClick = {
-                            viewmodel.newLayerAction()
-                        },
-
-                        modifier = Modifier.size(80.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(modify(MaterialTheme.colorScheme.secondaryContainer, a = .5f))
+                Box {
+                    val scrollState = rememberScrollState()
+                    Row(
+                        modifier = Modifier
+                            .horizontalScroll(scrollState),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "add layer",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+
+                        IconButton(
+                            onClick = {
+                                viewmodel.newLayerAction()
+                            },
+
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(modify(MaterialTheme.colorScheme.secondaryContainer, a = .5f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "add layer",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+
+                        for ((index, layer) in layers.withIndex()) {
+                            if (index != 0) {
+                                val borderColor =
+                                    if (index == activeIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                                android.util.Log.d(
+                                    "NewPaintingScreen",
+                                    "layer $index last updated (active=$activeIndex): ${layer.lastUpdatedTimestamp}"
+                                )
+
+                                // need to run async to generate preview bitmap
+                                val previewBitmap by produceState<Bitmap?>(
+                                    initialValue = null,
+                                    key1 = layer.lastUpdatedTimestamp
+                                ) {
+                                    // https://stackoverflow.com/a/59589270
+                                    value = viewmodel.getLayerBitmap(index)
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .padding(start = 10.dp)
+                                        .size(80.dp)
+                                        .border(
+                                            BorderStroke(2.dp, borderColor),
+                                            RoundedCornerShape(4.dp)
+                                        )
+                                        .padding(4.dp)
+                                        .pointerInput(Unit) {
+                                            detectDragGesturesAfterLongPress(
+                                                onDragStart = {
+                                                    draggedItem = index
+                                                    dragOffset = Offset.Zero
+                                                },
+                                                onDragEnd = {
+                                                    val from = draggedItem!!
+                                                    val to = (draggedItem!! + (dragOffset.x / 90).roundToInt()).coerceIn(1, layers.size - 1)
+                                                    viewmodel.reorderLayers(from, to)
+                                                    draggedItem = null
+                                                    dragOffset = Offset.Zero
+                                                },
+                                                onDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    dragOffset += dragAmount
+                                                }
+                                            )
+                                        }
+                                        .clickable {
+                                            if (activeIndex != index)
+                                                viewmodel.setActiveLayer(index)
+                                            else
+                                                viewmodel.setActiveLayer(null)
+                                        }
+                                ) {
+                                    previewBitmap?.let {
+                                        Image(
+                                            bitmap = it.asImageBitmap(),
+                                            contentDescription = "layer preview",
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
-
-                    for ((index, layer) in layers.withIndex()) {
-                        if (index!=0){
-                        val borderColor =
-                            if (index == activeIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
-                        android.util.Log.d("NewPaintingScreen", "layer $index last updated (active=$activeIndex): ${layer.lastUpdatedTimestamp}")
-
-                        // need to run async to generate preview bitmap
+                    if (draggedItem != null) {
+                        val draggedLayer = layers[draggedItem!!]
                         val previewBitmap by produceState<Bitmap?>(
                             initialValue = null,
-                            key1 = layer.lastUpdatedTimestamp
+                            key1 = draggedLayer.lastUpdatedTimestamp
                         ) {
-                            // https://stackoverflow.com/a/59589270
-                            value = viewmodel.getLayerBitmap(index)
+                            value = viewmodel.getLayerBitmap(draggedItem!!)
                         }
 
                         Box(
                             modifier = Modifier
+                                .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
                                 .padding(start = 10.dp)
                                 .size(80.dp)
-                                .border(BorderStroke(2.dp, borderColor), RoundedCornerShape(4.dp))
+                                .border(
+                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                                    RoundedCornerShape(4.dp)
+                                )
                                 .padding(4.dp)
-                                .clickable {
-                                    if (activeIndex != index)
-                                        viewmodel.setActiveLayer(index)
-                                    else
-                                        viewmodel.setActiveLayer(null)
-                                }
                         ) {
                             previewBitmap?.let {
                                 Image(
@@ -657,7 +726,7 @@ fun NewPaintingScreen(
                                 )
                             }
                         }
-                    }}
+                    }
                 }
             }
         }
