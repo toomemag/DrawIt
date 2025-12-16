@@ -8,14 +8,22 @@ import com.example.drawit.data.remote.firestore.mapper.toFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
 import com.example.drawit.data.remote.model.NetworkResult
 import com.example.drawit.domain.model.Painting
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+
+data class User(
+    val id: String,
+    val username: String
+)
 
 class FirestoreDrawItRepository(
     private val db: FirebaseFirestore,
     private val dao: PaintingDao
 ) {
+    private val USERS_COLLECTION = "users"
     private val PAINTINGS_COLLECTION = "paintings"
+    private val FRIEND_REQUESTS_COLLECTION = "friend_requests"
 
     suspend fun upsert( item: Painting ): NetworkResult< Unit > {
         return try {
@@ -82,4 +90,34 @@ class FirestoreDrawItRepository(
             NetworkResult.Error( e.message ?: "Unknown error" )
         }
     }
+
+    suspend fun searchForUser(username: String): NetworkResult<List<User>> {
+        return try {
+            val end = "$username\uf8ff" // upper bound for prefix search
+
+            val snapshot = db.collection(USERS_COLLECTION)
+                .where(Filter.greaterThanOrEqualTo("username", username))
+                .where(Filter.lessThanOrEqualTo("username", end))
+                .get()
+                .await()
+
+            android.util.Log.d("FirestoreDrawItRepository", "searchForUser - found ${snapshot.size()} users for query '$username'")
+
+            val users = snapshot.documents.mapNotNull {
+                val id = it.id
+                val uname = it.getString("username")
+                if (uname != null) {
+                    User(id = id, username = uname)
+                } else {
+                    null
+                }
+            }
+
+            NetworkResult.Success(users)
+        } catch ( e: Exception ) {
+            NetworkResult.Error( e.message ?: "Unknown error" )
+        }
+    }
+
+
 }

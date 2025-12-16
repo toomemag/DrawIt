@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.drawit.ui.theme.DrawitTheme
 import com.example.drawit.ui.viewmodels.auth.AuthenticationViewmodel
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 @Preview
 @Composable
@@ -139,7 +140,6 @@ fun AuthenticationScreen(viewmodel: AuthenticationViewmodel? = null) {
                     }
                 }
 
-
                 OutlinedTextField(
                     value = email.value,
                     onValueChange = { email.value = it },
@@ -169,7 +169,8 @@ fun AuthenticationScreen(viewmodel: AuthenticationViewmodel? = null) {
                         .fillMaxWidth()
                         .padding(0.dp, 8.dp, 0.dp, 8.dp),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.displaySmall
+                    textStyle = MaterialTheme.typography.displaySmall,
+                    visualTransformation = PasswordVisualTransformation()
                 )
 
                 Button(
