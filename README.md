@@ -31,7 +31,6 @@
   4.  Community feed - See all sorts of drawings made by other artists.    
   5.  Friend feed - See what your friends have drawn.    
 
-
 ---
 ## Installation
 - ### Dependencies
