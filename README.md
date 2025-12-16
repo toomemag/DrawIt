@@ -56,14 +56,17 @@ Log out button, next to username.
 
   
 - ### Creating a painting
-  <img width="402" height="537" alt="image" src="https://github.com/user-attachments/assets/b52d81d5-8cb7-46ad-8c48-b5f2668137f3" />    
-  Create a new painting using the + symbol.
-  <img width="397" height="890" alt="image" src="https://github.com/user-attachments/assets/c6e1c9cb-f066-4a56-8167-f672684a482b" />    
-  The main drawing screen
+  <img width="402" height="537" alt="image" src="https://github.com/user-attachments/assets/b52d81d5-8cb7-46ad-8c48-b5f2668137f3" />
+         
+    Create a new painting using the + symbol.
+  <img width="397" height="890" alt="image" src="https://github.com/user-attachments/assets/c6e1c9cb-f066-4a56-8167-f672684a482b" />
+       
+    The main drawing screen
   
   - ### Drawing tools
    <img width="259" height="58" alt="image" src="https://github.com/user-attachments/assets/5c15bb51-a6a9-4b6a-a447-a966d2233340" />
-  Different drawing tools, from left to right:
+      
+      Different drawing tools, from left to right:
   - **Pencil**: 1 pixel wide drawing tool.
   - **Brush**: Resizable drawing tool, allowing to create bigger brushes.
   - ****
