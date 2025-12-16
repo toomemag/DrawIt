@@ -35,11 +35,11 @@
     
   - #### Windows
     Download [Android Studio](https://developer.android.com/studio)    
-    Download the latest source code file under [Releases](https://github.com/toomemag/DrawIt/releases)  
-    Extract files
-    Open Android Studio and import the folder.
+    Download the latest source code file under [Releases](https://github.com/toomemag/DrawIt/releases)    
+    Extract files.    
+    Open Android Studio and import the folder.    
     Build the application using Gradle ("Assemble 'App' Run Configiration").    
-    Create a new simulated device under "Device Manager". For best results, use Android 16.0 ("Baklava").
+    Create a new simulated device under "Device Manager". For best results, use Android 16.0 ("Baklava").    
     Run the app.    
     
   
