@@ -215,7 +215,7 @@ fun ProfileScreen(
                                 val userPaintings = result.data as List< Painting >
 
                                 renderUploadedPaintings(
-                                    userPaintings = userPaintings,
+                                    userPaintings = userPaintings.reversed(),
                                     firestore = firestore,
                                     refreshPaintings = {
                                         scope.launch {
@@ -268,7 +268,7 @@ fun ProfileScreen(
                     ) {
 
                         PaintingGridGallery(
-                            paintings = paintings,
+                            paintings = paintings.reversed(),
                             onPaintingClick = { painting ->
                                 val intent = Intent(ctx, PaintingActivity::class.java).apply {
                                     putExtra("paintingId", painting.id)

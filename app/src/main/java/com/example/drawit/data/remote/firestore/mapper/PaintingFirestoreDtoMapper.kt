@@ -9,6 +9,7 @@ import com.example.drawit.data.remote.firestore.model.LayerFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
 import com.example.drawit.domain.model.Painting
 import com.google.firebase.Timestamp
+import java.util.UUID
 
 
 /**
@@ -65,7 +66,7 @@ fun LayerFirestoreDto.toEntity(painting: Painting): PaintingLayerEntity = Painti
  * @return PaintingFirestoreDto representing the painting for Firestore storage.
  */
 fun PaintingEntity.toFirestoreDto(userId: String, layers: List<PaintingLayerEntity>, bindings: Map<String, List<LayerBindingEntity>>): PaintingFirestoreDto = PaintingFirestoreDto(
-    id = this.id,
+    id = if ( this.id.isEmpty( ) ) UUID.randomUUID().toString() else this.id,
     createdAt = Timestamp.now(),
     layers = layers.map { it.toFirestoreDto( bindings.getOrDefault(this.id, listOf())) },
     mode = this.mode,

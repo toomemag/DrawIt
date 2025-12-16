@@ -5,6 +5,7 @@ import com.example.drawit.data.local.room.mapper.toEntityWithRelations
 import com.example.drawit.data.remote.firestore.mapper.toDomain
 import com.example.drawit.data.remote.firestore.mapper.toEntity
 import com.example.drawit.data.remote.firestore.mapper.toFirestoreDto
+import com.example.drawit.data.remote.firestore.model.FriendFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
 import com.example.drawit.data.remote.model.NetworkResult
 import com.example.drawit.domain.model.Painting
@@ -18,6 +19,12 @@ data class User(
     val createdAt: Timestamp,
     val userId: String,
     val username: String
+)
+
+data class Friend(
+    val ids: List<String>,
+    val friendId: String,
+    val since: Timestamp
 )
 
 class FirestoreDrawItRepository(
@@ -272,7 +279,7 @@ class FirestoreDrawItRepository(
         }
     }
 
-    suspend fun getFriendsForUser(userId: String): NetworkResult<List<Map<String, Any>>> {
+    suspend fun getFriendsForUser(userId: String): NetworkResult<List<Friend>> {
         return try {
             val snapshot = db.collection(FRIENDS_COLLECTION)
                 .whereArrayContains("ids", userId)
@@ -280,7 +287,13 @@ class FirestoreDrawItRepository(
                 .await()
 
             val friends = snapshot.documents.mapNotNull {
-                it.data
+                it.toObject(FriendFirestoreDto::class.java)
+            }.map { firestoreDto ->
+                Friend(
+                    ids = firestoreDto.ids,
+                    friendId = if (firestoreDto.ids[0] == userId) firestoreDto.ids[1] else firestoreDto.ids[0],
+                    since = firestoreDto.createdAt
+                )
             }
 
             NetworkResult.Success(friends)

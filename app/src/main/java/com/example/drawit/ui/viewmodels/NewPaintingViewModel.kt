@@ -139,8 +139,8 @@ class NewPaintingViewModel(
     fun openLayerEffectsDialog() { _isLayerEffectsDialogOpen.value = true }
     fun closeLayerEffectsDialog() { _isLayerEffectsDialogOpen.value = false }
 
-    fun openSubmitDialog() { _isSubmitting.value = true; pausePainting( ) }
-    fun closeSubmitDialog() { _isSubmitting.value = false; resumePainting( ) }
+    fun openSubmitDialog() { _isSubmitting.value = true }
+    fun closeSubmitDialog() { _isSubmitting.value = false }
 
     fun openNewEffectDialog() { _isNewEffectDialogOpen.value = true }
     fun closeNewEffectDialog() { _isNewEffectDialogOpen.value = false }

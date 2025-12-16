@@ -98,7 +98,7 @@ fun PaintingFeedItem(
                 )
 
                 Text(
-                    text = "- ${ painting.mode } (draft)",
+                    text = "- ${ painting.mode }",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

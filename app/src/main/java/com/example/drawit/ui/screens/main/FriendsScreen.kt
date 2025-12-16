@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.drawit.DrawItApplication
 import com.example.drawit.data.remote.model.NetworkResult
+import com.example.drawit.data.remote.repository.Friend
 import com.example.drawit.data.remote.repository.User
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,7 +59,7 @@ fun FriendsScreen(
 
     var sentRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var receivedRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var friends by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var friends by remember { mutableStateOf<List<Friend>>(emptyList()) }
 
     suspend fun refreshRelationships() {
         // sent
@@ -180,7 +181,7 @@ fun FriendsScreen(
 
                     // compute relationship state
                     val isFriend = friends.any { doc ->
-                        val ids = doc["ids"] as? List<*>
+                        val ids = doc.ids as? List<*>
                         ids?.contains(user.userId) == true
                     }
 
@@ -329,7 +330,7 @@ fun FriendsScreen(
                 Text("None", style = MaterialTheme.typography.bodySmall)
             } else {
                 friends.forEach { fr ->
-                    val ids = fr["ids"] as? List<*> ?: emptyList<Any>()
+                    val ids = fr.ids as? List<*> ?: emptyList<Any>()
                     val otherId = ids.firstOrNull { it != currentUser.uid } as? String ?: "Unknown"
                     Text("- $otherId", style = MaterialTheme.typography.bodySmall)
                 }
