@@ -58,7 +58,7 @@ Log out button, next to username.
 - ### Creating a painting
   <img width="402" height="537" alt="image" src="https://github.com/user-attachments/assets/b52d81d5-8cb7-46ad-8c48-b5f2668137f3" />
          
-    Create a new painting using the + symbol.
+    Create a new painting using the "+" symbol.  
   <img width="397" height="890" alt="image" src="https://github.com/user-attachments/assets/c6e1c9cb-f066-4a56-8167-f672684a482b" />
        
     The main drawing screen
@@ -69,11 +69,19 @@ Log out button, next to username.
   Different drawing tools, from left to right:
   - **Pencil**: 1 pixel wide drawing tool.
   - **Brush**: Resizable drawing tool, allowing to create bigger brushes.
-  - ****
-
+  - **Fill**: Fills a closed area with a single colour.
+  - **Eraser**: Erases pixels.
+  - **Color Palette**: From here the user can choose colors and the transparency.
+ 
+ 
     
   - ### Layers
- 
+    <img width="287" height="107" alt="image" src="https://github.com/user-attachments/assets/84cef868-e7a7-4e17-b1db-7f998340f2c4" />
+     A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
+
+ ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)  
+ Layer draw order can be changed, by holding down the current layer and changing its position.
+
     
   - ### Effects
  
