@@ -6,7 +6,7 @@
   - [Dependencies](#dependencies)
   - [Instrucions](#instrucions)
 - [Usage Guide](#usage-guide)
-  - [Register/Login](#register/login)
+  - [Register and Login](#register-and-login)
   - [Creating a painting](#creating-a-painting)
     - [Drawing tools](#drawing-tools)
     - [Layers](#layers)
@@ -20,15 +20,32 @@
       
 ---
 ## Installation
-
 - ### Dependencies
-
+  - #### Core Libraries:  
+    Core AndroidX & Compose libraries, AndroidX Splashscreen, Core Material3 Design libraries, Compose Activity and Lifecycle libraries, AndroidX navigation library.
+  - #### Databases:  
+    Core Room Database libraries, Core Firebase libraries + Firebase Functions library for cloud functions.
+  - #### Other:  
+    Colorpicker library by skydoves, Core JUnit testing libraries, Gradle
 - ### Instrucions
-
+  - #### Android
+    Prerequisite: Android phone.   
+    Download the latest APK file under [Releases](https://github.com/toomemag/DrawIt/releases)   
+    Install the application and open.
+    
+  - #### Windows
+    Download [Android Studio](https://developer.android.com/studio)    
+    Download the latest source code file under [Releases](https://github.com/toomemag/DrawIt/releases)  
+    Extract files
+    Open Android Studio and import the folder.
+    Build the application using Gradle ("Assemble 'App' Run Configiration").    
+    Create a new simulated device under "Device Manager". For best results, use Android 16.0 ("Baklava").
+    Run the app.    
+    
   
 ## Usage guide 
 
-- ### Register/Login
+- ### Register and Login
 
   
 - ### Creating a painting
