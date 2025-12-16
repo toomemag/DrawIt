@@ -3,7 +3,7 @@ Repository for DrawIt
 Members:
 Erki Toomemägi (toomemag), Anton Otrokov (Anton Otrokov), Mark Riispapp (markriis, 11x1), Romet Vislapuu (Romet-Vislapuu)
 
-(https://github.com/toomemag/DrawIt/blob/main/ReadMe_files/GitLogo.png)
+[img1](https://github.com/toomemag/DrawIt/blob/main/ReadMe_files/GitLogo.png)
 
 
 # Table of contents
