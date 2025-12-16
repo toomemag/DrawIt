@@ -1,6 +1,5 @@
 package com.example.drawit.data.remote.firestore.mapper
 
-import android.util.Base64
 import com.example.drawit.data.local.room.entity.LayerBindingEntity
 import com.example.drawit.data.local.room.entity.PaintingEntity
 import com.example.drawit.data.local.room.entity.PaintingLayerEntity
@@ -8,9 +7,6 @@ import com.example.drawit.data.local.room.mapper.toDomain
 import com.example.drawit.data.remote.firestore.model.LayerBindingFirestoreDto
 import com.example.drawit.data.remote.firestore.model.LayerFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
-import com.example.drawit.domain.model.Layer
-import com.example.drawit.domain.model.LayerEffectBinding
-import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.domain.model.Painting
 import com.google.firebase.Timestamp
 
@@ -41,7 +37,7 @@ fun PaintingFirestoreDto.toDomain(): Painting {
         val layerEnt = layerDto.toEntity(p)
         val bindingsEntList = layerDto.bindings.flatMap { (effectType, list) ->
             list.map { bindingDto ->
-                bindingDto.toEntity(layerId = layerEnt.id, effectType = effectType)
+                bindingDto.toEntity(layerId = layerEnt.id, effectType = effectType.toInt())
             }
         }
         layerEnt.toDomain(bindingsEntList)
@@ -68,7 +64,7 @@ fun LayerFirestoreDto.toEntity(painting: Painting): PaintingLayerEntity = Painti
  * @param bindings Map where the key is the painting ID and the value is a list of LayerBindingEntity.
  * @return PaintingFirestoreDto representing the painting for Firestore storage.
  */
-fun PaintingEntity.toFirestoreDto(layers: List<PaintingLayerEntity>, bindings: Map<String, List<LayerBindingEntity>>): PaintingFirestoreDto = PaintingFirestoreDto(
+fun PaintingEntity.toFirestoreDto(userId: String, layers: List<PaintingLayerEntity>, bindings: Map<String, List<LayerBindingEntity>>): PaintingFirestoreDto = PaintingFirestoreDto(
     id = this.id,
     createdAt = Timestamp.now(),
     layers = layers.map { it.toFirestoreDto( bindings.getOrDefault(this.id, listOf())) },
@@ -76,7 +72,7 @@ fun PaintingEntity.toFirestoreDto(layers: List<PaintingLayerEntity>, bindings: M
     size = this.size,
     theme = this.theme,
     timeTaken = this.timeTaken,
-    userId = ""
+    userId = userId
 )
 
 /**
@@ -88,7 +84,7 @@ fun PaintingLayerEntity.toFirestoreDto(bindings: List<LayerBindingEntity>): Laye
     id = this.id,
     bitmap = this.bitmap,
     bindings = bindings
-        .groupBy { it.effectType }
+        .groupBy { it.effectType.toString() }
         .mapValues { entry -> entry.value.map { it.toFirestoreDto() } }
 )
 

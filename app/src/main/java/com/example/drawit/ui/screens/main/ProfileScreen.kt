@@ -38,7 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreDrawItRepository) {
+fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreDrawItRepository, refreshPaintings: ( ) -> Unit = { }) {
     val scope = rememberCoroutineScope()
 
     if ( userPaintings.isEmpty( ) ) {
@@ -58,7 +58,18 @@ fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreD
         },
         onPaintingDelete = { painting ->
             scope.launch(Dispatchers.IO) {
-                firestore.delete(painting.id)
+                val res = firestore.delete(painting.id)
+
+                when ( res ) {
+                    is NetworkResult.Success -> {
+                        // no op, maybe toast later
+                        refreshPaintings( )
+                    }
+                    is NetworkResult.Error -> {
+                        android.util.Log.d( "ProfileScreen", "Error deleting painting (${ painting.id }): ${res.message}" )
+                    }
+                    else -> { }
+                }
             }
         }
     )
@@ -80,6 +91,8 @@ fun ProfileScreen(
 
     val fetchedPaintings = remember { mutableStateOf<NetworkResult<*>>(NetworkResult.Loading) }
     val isRefreshing = remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     // preview support
     DrawitTheme {
@@ -183,7 +196,12 @@ fun ProfileScreen(
 
                                 renderUploadedPaintings(
                                     userPaintings = userPaintings,
-                                    firestore = firestore
+                                    firestore = firestore,
+                                    refreshPaintings = {
+                                        scope.launch {
+                                            fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                        }
+                                    }
                                 )
                             }
                             is NetworkResult.Error -> {
@@ -208,7 +226,12 @@ fun ProfileScreen(
                                     if (fetchedPaintings.value is NetworkResult.Success<*>) {
                                         renderUploadedPaintings(
                                             userPaintings = (fetchedPaintings.value as NetworkResult.Success<*>).data as List<Painting>,
-                                            firestore = firestore
+                                            firestore = firestore,
+                                            refreshPaintings = {
+                                                scope.launch {
+                                                    fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                                }
+                                            }
                                         )
                                     }
                                 }
@@ -223,7 +246,6 @@ fun ProfileScreen(
                             .fillMaxSize()
                             .padding(top = 10.dp)
                     ) {
-                        val scope = rememberCoroutineScope()
 
                         PaintingGridGallery(
                             paintings = paintings,
