@@ -45,12 +45,12 @@
   
 ## Usage guide 
 - ### Register and Login
-<img width="385" height="365" alt="image" src="https://github.com/user-attachments/assets/ae936829-af20-4a08-929d-579cfa914fa1" />
+<img width="385" height="365" alt="image" src="https://github.com/user-attachments/assets/ae936829-af20-4a08-929d-579cfa914fa1" />               
 
     
 The user can register an account using an email and password. The first part of the email becomes the users username. For example creating an account with an email marike@hotmail.com will create the username marike.    
-After registering an account, the user can log in with the same email and password.
-<img width="267" height="58" alt="image" src="https://github.com/user-attachments/assets/cf9aa4da-2b1f-4499-88d4-021b976d22ff" />     
+After registering an account, the user can log in with the same email and password.              
+<img width="267" height="58" alt="image" src="https://github.com/user-attachments/assets/cf9aa4da-2b1f-4499-88d4-021b976d22ff" />             
          
 Log out button, next to username.
 
