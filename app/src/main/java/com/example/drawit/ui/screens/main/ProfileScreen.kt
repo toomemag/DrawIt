@@ -1,5 +1,6 @@
 package com.example.drawit.ui.screens.main
 
+import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
@@ -27,6 +32,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.drawit.MainActivity
 import com.example.drawit.PaintingActivity
 import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
 import com.example.drawit.data.remote.model.NetworkResult
@@ -38,7 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreDrawItRepository) {
+fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreDrawItRepository, refreshPaintings: ( ) -> Unit = { }) {
     val scope = rememberCoroutineScope()
 
     if ( userPaintings.isEmpty( ) ) {
@@ -58,7 +65,18 @@ fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreD
         },
         onPaintingDelete = { painting ->
             scope.launch(Dispatchers.IO) {
-                firestore.delete(painting.id)
+                val res = firestore.delete(painting.id)
+
+                when ( res ) {
+                    is NetworkResult.Success -> {
+                        // no op, maybe toast later
+                        refreshPaintings( )
+                    }
+                    is NetworkResult.Error -> {
+                        android.util.Log.d( "ProfileScreen", "Error deleting painting (${ painting.id }): ${res.message}" )
+                    }
+                    else -> { }
+                }
             }
         }
     )
@@ -67,7 +85,8 @@ fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreD
 @Preview
 @Composable
 fun ProfileScreen(
-    paintingsRepository: LocalPaintingsRepository? = null
+    paintingsRepository: LocalPaintingsRepository? = null,
+    navController: NavController? = null
 ) {
     var selected by remember { mutableStateOf(0) }
     val paintingsFlow = remember { paintingsRepository?.getAllPaintings() }
@@ -81,12 +100,15 @@ fun ProfileScreen(
     val fetchedPaintings = remember { mutableStateOf<NetworkResult<*>>(NetworkResult.Loading) }
     val isRefreshing = remember { mutableStateOf(false) }
 
+    val scope = rememberCoroutineScope()
+
     // preview support
     DrawitTheme {
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            val user = firebaseAuth.getCurrentUser()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -95,7 +117,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Username",
+                    text = user?.displayName ?: "Username",
                     style = MaterialTheme.typography.displayLarge,
                 )
 
@@ -108,6 +130,18 @@ fun ProfileScreen(
                     modifier = Modifier
                         .padding(start = 10.dp)
                 )
+                IconButton(onClick = {
+                    scope.launch {
+                        firebaseAuth.logout()
+                        val activity = (ctx as? Activity)
+                        val intent = Intent(ctx, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        ctx.startActivity(intent)
+                        activity?.finish()
+                    }
+                }) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                }
             }
 
             SecondaryTabRow(
@@ -151,7 +185,6 @@ fun ProfileScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top
                     ) {
-                        val user = firebaseAuth.getCurrentUser()
                         if ( user == null ) {
                             Text(
                                 text = "Something went wrong.",
@@ -182,14 +215,19 @@ fun ProfileScreen(
                                 val userPaintings = result.data as List< Painting >
 
                                 renderUploadedPaintings(
-                                    userPaintings = userPaintings,
-                                    firestore = firestore
+                                    userPaintings = userPaintings.reversed(),
+                                    firestore = firestore,
+                                    refreshPaintings = {
+                                        scope.launch {
+                                            fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                        }
+                                    }
                                 )
                             }
                             is NetworkResult.Error -> {
                                 // todo: could toast
                                 Text(
-                                    text = "Error fetching paintings.\n${result.message}",
+                                    text = "Error fetching paintings.${result.message}",
                                     style = MaterialTheme.typography.displayMedium,
                                     color = MaterialTheme.colorScheme.error,
                                     textAlign = TextAlign.Center
@@ -208,7 +246,12 @@ fun ProfileScreen(
                                     if (fetchedPaintings.value is NetworkResult.Success<*>) {
                                         renderUploadedPaintings(
                                             userPaintings = (fetchedPaintings.value as NetworkResult.Success<*>).data as List<Painting>,
-                                            firestore = firestore
+                                            firestore = firestore,
+                                            refreshPaintings = {
+                                                scope.launch {
+                                                    fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                                }
+                                            }
                                         )
                                     }
                                 }
@@ -223,10 +266,9 @@ fun ProfileScreen(
                             .fillMaxSize()
                             .padding(top = 10.dp)
                     ) {
-                        val scope = rememberCoroutineScope()
 
                         PaintingGridGallery(
-                            paintings = paintings,
+                            paintings = paintings.reversed(),
                             onPaintingClick = { painting ->
                                 val intent = Intent(ctx, PaintingActivity::class.java).apply {
                                     putExtra("paintingId", painting.id)

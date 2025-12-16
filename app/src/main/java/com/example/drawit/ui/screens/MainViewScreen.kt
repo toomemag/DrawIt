@@ -28,9 +28,7 @@ fun MainViewScreen(
             .fillMaxSize()
     ) {
         when (selectedTab) {
-            Tab.Feed -> FeedScreen(
-                paintingsRepository = paintingsRepository
-            )
+            Tab.Feed -> FeedScreen()
             Tab.Friends -> FriendsScreen()
             Tab.Profile -> ProfileScreen(
                 paintingsRepository = paintingsRepository

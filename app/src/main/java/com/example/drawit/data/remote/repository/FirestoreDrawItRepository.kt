@@ -5,11 +5,11 @@ import com.example.drawit.data.local.room.mapper.toEntityWithRelations
 import com.example.drawit.data.remote.firestore.mapper.toDomain
 import com.example.drawit.data.remote.firestore.mapper.toEntity
 import com.example.drawit.data.remote.firestore.mapper.toFirestoreDto
+import com.example.drawit.data.remote.firestore.model.FriendFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
 import com.example.drawit.data.remote.model.NetworkResult
 import com.example.drawit.domain.model.Painting
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
@@ -21,6 +21,12 @@ data class User(
     val username: String
 )
 
+data class Friend(
+    val ids: List<String>,
+    val friendId: String,
+    val since: Timestamp
+)
+
 class FirestoreDrawItRepository(
     private val db: FirebaseFirestore,
     private val dao: PaintingDao
@@ -30,8 +36,15 @@ class FirestoreDrawItRepository(
     private val FRIEND_REQUESTS_COLLECTION = "friendrequests"
     private val FRIENDS_COLLECTION = "friends"
 
-    suspend fun upsert( item: Painting ): NetworkResult< Unit > {
+    suspend fun upsert( userId: String, item: Painting ): NetworkResult< Unit > {
         return try {
+            android.util.Log.d( "FirestoreDrawItRepository", "upsert - painting<" +
+                    "id=${item.id}, " +
+                    "size=${item.size}, " +
+                    "#layers=${item.layers.size}, " +
+                    "timeTaken=${item.timeTaken}, " +
+                    "theme=${item.theme}, " +
+                    "mode=${item.mode}>" )
             val doc = db.collection(PAINTINGS_COLLECTION).document(item.id)
 
             // creates painting + layers objects
@@ -42,8 +55,41 @@ class FirestoreDrawItRepository(
             val bindings = localEntity.layers.associate { layerWithBindings ->
                 layerWithBindings.layer.id to layerWithBindings.bindings
             }
+            val firestoreDto = localEntity.painting.toFirestoreDto( userId, layers, bindings)
 
-            doc.set(localEntity.painting.toFirestoreDto(layers, bindings)).await()
+            val dtoLog = buildString {
+                appendLine("upsert - firestoreDto:")
+                appendLine("  id=${firestoreDto.id}")
+                appendLine("  userId=${firestoreDto.userId}")
+                appendLine("  theme=${firestoreDto.theme}")
+                appendLine("  mode=${firestoreDto.mode}")
+                appendLine("  size=${firestoreDto.size}")
+                appendLine("  timeTaken=${firestoreDto.timeTaken}")
+                appendLine("  createdAt=${firestoreDto.createdAt.toDate()}")
+                appendLine("  layers(size=${firestoreDto.layers.size}):")
+
+                firestoreDto.layers.forEachIndexed { layerIndex, layer ->
+                    appendLine("    [$layerIndex] Layer id=${layer.id}")
+                    appendLine("      bitmapLength=${layer.bitmap.length}")
+                    appendLine("      bindings(effectTypes=${layer.bindings.keys}):")
+                    appendLine("      bitmap: ${layer.bitmap.substring(0, 10)}...")
+
+                    layer.bindings.forEach { (effectType, list) ->
+                        appendLine("        effectType=$effectType, bindingsCount=${list.size}")
+                        list.forEachIndexed { idx, binding ->
+                            appendLine(
+                                "          [$idx] id=${binding.id}, " +
+                                        "effectInputIndex=${binding.effectInputIndex}, " +
+                                        "layerTransformInput=${binding.layerTransformInput}"
+                            )
+                        }
+                    }
+                }
+            }
+            android.util.Log.d("FirestoreDrawItRepository", dtoLog)
+
+            doc.set(firestoreDto).await()
+
             refreshFromRemote()
         } catch ( e: Exception ) {
             return NetworkResult.Error( e.message ?: "Unknown error" )
@@ -173,10 +219,8 @@ class FirestoreDrawItRepository(
         }
     }
 
-    suspend fun acceptFriendRequest(userId: String, requestId: String): NetworkResult<String?> {
+    suspend fun acceptFriendRequest(requestId: String): NetworkResult<String?> {
         return try {
-            val user = FirebaseAuth.getInstance().currentUser
-            android.util.Log.d("AUTH", "UID: ${user?.uid}")
             val functions = FirebaseFunctions.getInstance()
 
             val data = hashMapOf(
@@ -235,7 +279,7 @@ class FirestoreDrawItRepository(
         }
     }
 
-    suspend fun getFriendsForUser(userId: String): NetworkResult<List<Map<String, Any>>> {
+    suspend fun getFriendsForUser(userId: String): NetworkResult<List<Friend>> {
         return try {
             val snapshot = db.collection(FRIENDS_COLLECTION)
                 .whereArrayContains("ids", userId)
@@ -243,7 +287,13 @@ class FirestoreDrawItRepository(
                 .await()
 
             val friends = snapshot.documents.mapNotNull {
-                it.data
+                it.toObject(FriendFirestoreDto::class.java)
+            }.map { firestoreDto ->
+                Friend(
+                    ids = firestoreDto.ids,
+                    friendId = if (firestoreDto.ids[0] == userId) firestoreDto.ids[1] else firestoreDto.ids[0],
+                    since = firestoreDto.createdAt
+                )
             }
 
             NetworkResult.Success(friends)

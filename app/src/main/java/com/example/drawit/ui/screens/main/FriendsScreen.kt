@@ -1,5 +1,6 @@
 package com.example.drawit.ui.screens.main
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,10 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.drawit.DrawItApplication
 import com.example.drawit.data.remote.model.NetworkResult
+import com.example.drawit.data.remote.repository.Friend
 import com.example.drawit.data.remote.repository.User
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,7 +63,7 @@ fun FriendsScreen(
 
     var sentRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var receivedRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var friends by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var friends by remember { mutableStateOf<List<Friend>>(emptyList()) }
 
     suspend fun refreshRelationships() {
         // sent
@@ -82,6 +87,13 @@ fun FriendsScreen(
     }
 
     LaunchedEffect(searchQuery.value) {
+        if (searchQuery.value.isBlank()) {
+            users = emptyList()
+            error.value = null
+            isLoading = false
+            return@LaunchedEffect
+        }
+
         isLoading = true
         error.value = null
 
@@ -99,6 +111,11 @@ fun FriendsScreen(
         refreshRelationships()
 
         isLoading = false
+    }
+
+    // fetch friends and friend reqs anyway
+    LaunchedEffect(Unit) {
+        refreshRelationships()
     }
 
     Column(
@@ -168,7 +185,7 @@ fun FriendsScreen(
 
                     // compute relationship state
                     val isFriend = friends.any { doc ->
-                        val ids = doc["ids"] as? List<*>
+                        val ids = doc.ids as? List<*>
                         ids?.contains(user.userId) == true
                     }
 
@@ -179,14 +196,17 @@ fun FriendsScreen(
                         doc["fromId"] == user.userId
                     }
 
-                    Box(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(16.dp)
                         ) {
                             Text(
                                 text = user.username,
@@ -206,7 +226,7 @@ fun FriendsScreen(
                                         receivedRequest != null -> "Request received"
                                         else -> "Not friend"
                                     },
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
 
                                 Button(
@@ -236,7 +256,7 @@ fun FriendsScreen(
 
                                                 receivedRequest != null -> {
                                                     val requestId = "${user.userId}_to_${currentUser.uid}"
-                                                    when (val res = repo.acceptFriendRequest(currentUser.uid, requestId)) {
+                                                    when (val res = repo.acceptFriendRequest(requestId)) {
                                                         is NetworkResult.Success -> refreshRelationships()
                                                         is NetworkResult.Error ->
                                                             android.util.Log.e("FriendsScreen", "acceptFriendRequest failed: ${res.message}")
@@ -282,44 +302,78 @@ fun FriendsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp, 16.dp, 16.dp, 60.dp)
+                .padding(16.dp, 16.dp, 16.dp, 170.dp)
         ) {
-            Text("Sent requests", style = MaterialTheme.typography.titleSmall)
+            Text("Sent requests", style = MaterialTheme.typography.titleMedium)
             if (sentRequests.isEmpty()) {
-                Text("None", style = MaterialTheme.typography.bodySmall)
+                Text("None", style = MaterialTheme.typography.bodyMedium)
             } else {
                 sentRequests.forEach { req ->
                     val toUsername = req["toUsername"] as? String ?: "Unknown"
-                    Text("- $toUsername", style = MaterialTheme.typography.bodySmall)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = toUsername,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
                 modifier = Modifier.padding(top = 8.dp),
                 text = "Received requests",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium
             )
             if (receivedRequests.isEmpty()) {
-                Text("None", style = MaterialTheme.typography.bodySmall)
+                Text("None", style = MaterialTheme.typography.bodyMedium)
             } else {
                 receivedRequests.forEach { req ->
                     val fromUsername = req["fromUsername"] as? String ?: "Unknown"
-                    Text("- $fromUsername", style = MaterialTheme.typography.bodySmall)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = fromUsername,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
                 modifier = Modifier.padding(top = 8.dp),
                 text = "Friends",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium
             )
             if (friends.isEmpty()) {
-                Text("None", style = MaterialTheme.typography.bodySmall)
+                Text("None", style = MaterialTheme.typography.bodyMedium)
             } else {
                 friends.forEach { fr ->
-                    val ids = fr["ids"] as? List<*> ?: emptyList<Any>()
+                    val ids = fr.ids as? List<*> ?: emptyList<Any>()
                     val otherId = ids.firstOrNull { it != currentUser.uid } as? String ?: "Unknown"
-                    Text("- $otherId", style = MaterialTheme.typography.bodySmall)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = otherId,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
         }

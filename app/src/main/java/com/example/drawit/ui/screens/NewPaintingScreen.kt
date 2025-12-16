@@ -8,7 +8,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -62,13 +61,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.drawit.DrawItApplication
+import com.example.drawit.data.remote.model.NetworkResult
 import com.example.drawit.painting.CanvasView
 import com.example.drawit.painting.PaintTool
 import com.example.drawit.ui.components.painting.ToolButton
@@ -77,6 +78,7 @@ import com.example.drawit.ui.dialogs.LayerEffectsDialog
 import com.example.drawit.ui.dialogs.ColorpickerDialog
 import com.example.drawit.ui.dialogs.EffectBindingDialog
 import com.example.drawit.ui.dialogs.PausePainting
+import com.example.drawit.ui.dialogs.SubmitPaintingDialog
 import com.example.drawit.ui.theme.DrawitTheme
 import com.example.drawit.ui.viewmodels.CanvasGestureState
 import com.example.drawit.ui.viewmodels.NewPaintingViewModel
@@ -107,6 +109,7 @@ fun NewPaintingScreen(
 
     val colorpickerOpen by viewmodel.isColorpickerOpen.collectAsState()
     val isPaintingPaused by viewmodel.isPaused.collectAsState()
+    val isSubmitting by viewmodel.isSubmitting.collectAsState()
     val isLayerEffectsOpen by viewmodel.isLayerEffectsDialogOpen.collectAsState()
     val isNewEffectDialogOpen by viewmodel.isNewEffectDialogOpen.collectAsState()
     val editBindingDialog by viewmodel.editBindingDialog.collectAsState()
@@ -114,6 +117,10 @@ fun NewPaintingScreen(
     //var isBrushMenuOpen by remember { mutableStateOf(false) }
     val isBrushMenuOpen by viewmodel.isBrushMenuOpen.collectAsState()
 
+
+    val ctx = LocalContext.current
+    val app = ctx.applicationContext as DrawItApplication
+    val currentUser = app.authenticationRepository.getCurrentUser()!!
 
     if (isSystemInDarkTheme()) {
         viewmodel.setColor(Color(0xFFffffff))
@@ -268,6 +275,36 @@ fun NewPaintingScreen(
                 } else -> {}
             }
 
+            when (isSubmitting) {
+                true -> {
+                    SubmitPaintingDialog(
+                        onSubmit = {
+                            scope.launch {
+                                val result = app.firestorePaintingsRepository.upsert(currentUser.uid, viewmodel.getPainting())
+
+                                when ( result ) {
+                                    is NetworkResult.Success -> {
+                                        // mark painting as synced in local db
+                                        onPostSubmit()
+                                    }
+                                    is NetworkResult.Error -> {
+                                        android.util.Log.d("NewPaintingScreen", "SubmitPaintingDialog - failed to submit painting: ${result.message}")
+                                    }
+                                    else -> {
+
+                                    }
+                                }
+                            }
+                        },
+                        onCancel = {
+                            viewmodel.closeSubmitDialog()
+                        }
+                    )
+                }
+
+                else -> {}
+            }
+
 //        AndroidView(factory = { ctx ->
 //            GridBackgroundView(ctx).apply {
 //                layoutParams = ViewGroup.LayoutParams(
@@ -335,8 +372,7 @@ fun NewPaintingScreen(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                viewmodel.submitPainting(timeElapsedSeconds.toInt())
-                                onPostSubmit()
+                                viewmodel.openSubmitDialog()
                             }
                         },
                     ) {
@@ -477,8 +513,6 @@ fun NewPaintingScreen(
                                                         brushSize = viewmodel.getBrushSize()
                                                     )
                                                 }
-
-
 
 
                                                 return@setOnTouchListener true

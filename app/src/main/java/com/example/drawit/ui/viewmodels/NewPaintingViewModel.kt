@@ -101,6 +101,9 @@ class NewPaintingViewModel(
     private val _isPaused = MutableStateFlow(false)
     val isPaused = _isPaused.asStateFlow()
 
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting = _isSubmitting.asStateFlow()
+
 
     // internal vars, not exposed to UI
     // touch handling vars
@@ -138,6 +141,9 @@ class NewPaintingViewModel(
 
     fun openLayerEffectsDialog() { _isLayerEffectsDialogOpen.value = true }
     fun closeLayerEffectsDialog() { _isLayerEffectsDialogOpen.value = false }
+
+    fun openSubmitDialog() { _isSubmitting.value = true }
+    fun closeSubmitDialog() { _isSubmitting.value = false }
 
     fun openNewEffectDialog() { _isNewEffectDialogOpen.value = true }
     fun closeNewEffectDialog() { _isNewEffectDialogOpen.value = false }
@@ -628,6 +634,10 @@ class NewPaintingViewModel(
 
     fun serializeForFirebase(timeTakenSeconds: Int): Map<String, Any> {
         return canvasManager.serializeForFirebase(timeTakenSeconds)
+    }
+
+    fun getPainting( ): Painting {
+        return canvasManager.getPainting()
     }
 
     suspend fun submitPainting(timeTakenSeconds: Int) {

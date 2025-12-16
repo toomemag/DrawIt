@@ -3,12 +3,12 @@ package com.example.drawit.data.remote.firestore.model
 import com.google.firebase.Timestamp
 
 data class PaintingFirestoreDto(
-    val id: String,
-    val layers: List< LayerFirestoreDto >,
-    val createdAt: Timestamp,
-    val mode: String,
-    val size: Int,
-    val theme: String,
-    val timeTaken: Long,
-    val userId: String
+    val id: String = "",
+    val layers: List< LayerFirestoreDto > = emptyList(),
+    val createdAt: Timestamp = Timestamp.now(),
+    val mode: String = "none",
+    val size: Int = 0,
+    val theme: String = "none",
+    val timeTaken: Long = 0L,
+    val userId: String = "",
 )
