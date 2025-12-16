@@ -1,5 +1,6 @@
 package com.example.drawit.ui.screens.main
 
+import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
@@ -27,6 +32,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.drawit.MainActivity
 import com.example.drawit.PaintingActivity
 import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
 import com.example.drawit.data.remote.model.NetworkResult
@@ -78,7 +85,8 @@ fun renderUploadedPaintings(userPaintings: List<Painting>, firestore: FirestoreD
 @Preview
 @Composable
 fun ProfileScreen(
-    paintingsRepository: LocalPaintingsRepository? = null
+    paintingsRepository: LocalPaintingsRepository? = null,
+    navController: NavController? = null
 ) {
     var selected by remember { mutableStateOf(0) }
     val paintingsFlow = remember { paintingsRepository?.getAllPaintings() }
@@ -100,6 +108,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            val user = firebaseAuth.getCurrentUser()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,7 +117,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Username",
+                    text = user?.displayName ?: "Username",
                     style = MaterialTheme.typography.displayLarge,
                 )
 
@@ -121,6 +130,18 @@ fun ProfileScreen(
                     modifier = Modifier
                         .padding(start = 10.dp)
                 )
+                IconButton(onClick = {
+                    scope.launch {
+                        firebaseAuth.logout()
+                        val activity = (ctx as? Activity)
+                        val intent = Intent(ctx, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        ctx.startActivity(intent)
+                        activity?.finish()
+                    }
+                }) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                }
             }
 
             SecondaryTabRow(
@@ -164,7 +185,6 @@ fun ProfileScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Top
                     ) {
-                        val user = firebaseAuth.getCurrentUser()
                         if ( user == null ) {
                             Text(
                                 text = "Something went wrong.",
@@ -207,7 +227,7 @@ fun ProfileScreen(
                             is NetworkResult.Error -> {
                                 // todo: could toast
                                 Text(
-                                    text = "Error fetching paintings.\n${result.message}",
+                                    text = "Error fetching paintings.${result.message}",
                                     style = MaterialTheme.typography.displayMedium,
                                     color = MaterialTheme.colorScheme.error,
                                     textAlign = TextAlign.Center
