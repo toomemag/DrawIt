@@ -9,7 +9,6 @@ import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
 import com.example.drawit.ui.screens.main.FeedScreen
 import com.example.drawit.ui.screens.main.FriendsScreen
 import com.example.drawit.ui.screens.main.ProfileScreen
-import com.google.firebase.firestore.FirebaseFirestore
 
 enum class Tab {
     Feed, // local DAO items atm,

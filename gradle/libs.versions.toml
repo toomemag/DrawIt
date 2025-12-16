@@ -18,6 +18,7 @@ navigation-compose = "2.9.5"
 firebase-auth = "24.0.1"
 firebase-bom = "34.5.0"
 firebase-firestore = "26.0.2"
+firebase-functions = "22.1.0"
 
 colorpicker = "1.1.2"
 retrofit = "3.0.0"
@@ -72,6 +73,7 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebase-auth" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebase-firestore" }
+firebase-functions = { module = "com.google.firebase:firebase-functions", version.ref = "firebase-functions" }
 
 # colorpicker
 colorpicker = { group = "com.github.skydoves", name = "colorpicker-compose", version.ref = "colorpicker"}
