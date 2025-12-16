@@ -82,6 +82,13 @@ fun FriendsScreen(
     }
 
     LaunchedEffect(searchQuery.value) {
+        if (searchQuery.value.isBlank()) {
+            users = emptyList()
+            error.value = null
+            isLoading = false
+            return@LaunchedEffect
+        }
+
         isLoading = true
         error.value = null
 
@@ -99,6 +106,11 @@ fun FriendsScreen(
         refreshRelationships()
 
         isLoading = false
+    }
+
+    // fetch friends and friend reqs anyway
+    LaunchedEffect(Unit) {
+        refreshRelationships()
     }
 
     Column(
@@ -236,7 +248,7 @@ fun FriendsScreen(
 
                                                 receivedRequest != null -> {
                                                     val requestId = "${user.userId}_to_${currentUser.uid}"
-                                                    when (val res = repo.acceptFriendRequest(currentUser.uid, requestId)) {
+                                                    when (val res = repo.acceptFriendRequest(requestId)) {
                                                         is NetworkResult.Success -> refreshRelationships()
                                                         is NetworkResult.Error ->
                                                             android.util.Log.e("FriendsScreen", "acceptFriendRequest failed: ${res.message}")
@@ -282,7 +294,7 @@ fun FriendsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp, 16.dp, 16.dp, 60.dp)
+                .padding(16.dp, 16.dp, 16.dp, 170.dp)
         ) {
             Text("Sent requests", style = MaterialTheme.typography.titleSmall)
             if (sentRequests.isEmpty()) {
