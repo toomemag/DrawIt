@@ -2,19 +2,19 @@
 ![img1](https://github.com/toomemag/DrawIt/blob/main/ReadMe_files/GitLogo.png)
 
 # Table of contents
-[Installation](#installation)
-- [Dependencies](#dependencies)
-- [Instrucions](#instrucions)
-[Usage Guide](#usage-guide)
-- [Register/Login](#register/login)
-- [Creating a painting](#creating-a-painting)
-  - [Drawing tools](#drawing-tools)
-  - [Layers](#layers)
-  - [Effects](#effects)
-- [Sharing](#sharing)
-  - [Profile](#profile)
-  - [Friends](#friends)
-[Project Structure](#project-structure)
+- [Installation](#installation)
+  - [Dependencies](#dependencies)
+  - [Instrucions](#instrucions)
+- [Usage Guide](#usage-guide)
+  - [Register/Login](#register/login)
+  - [Creating a painting](#creating-a-painting)
+    - [Drawing tools](#drawing-tools)
+    - [Layers](#layers)
+    - [Effects](#effects)
+  - [Sharing](#sharing)
+    - [Profile](#profile)
+    - [Friends](#friends)
+- [Project Structure](#project-structure)
    
       
 ---
