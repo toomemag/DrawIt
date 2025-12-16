@@ -1,4 +1,4 @@
-# DrawIt
+# <p align=center>DrawIt
 ![img1](https://github.com/toomemag/DrawIt/blob/main/ReadMe_files/GitLogo.png)
 
 # Table of contents
