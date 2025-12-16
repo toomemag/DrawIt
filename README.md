@@ -20,27 +20,49 @@
       
 ---
 ## Installation
+
 - ### Dependencies
+
 - ### Instrucions
+
+  
 ## Usage guide 
+
 - ### Register/Login
+
+  
 - ### Creating a painting
+
+  
   - ### Drawing tools
+ 
+    
   - ### Layers
+ 
+    
   - ### Effects
+ 
+    
 - ### Sharing
+
+  
   - ### Profile
+ 
+    
   - ### Friends
+ 
+    
 ## Project Structure
+
 Todo
+
+
+
 ## Members
 ### Erki Toomemägi (toomemag)
 ### Anton Otrokov (Anton Otrokov)
 ### Mark Riispapp (markriis, 11x1)
 ### Romet Vislapuu (Romet-Vislapuu)
-
-
-
 
 ## Description
 Community drawing app inspired by BeReal. Every day there is a random theme, where you have 10 minutes to draw based on the theme. Also an option to draw whatever you want.
