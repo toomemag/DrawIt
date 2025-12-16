@@ -39,7 +39,7 @@ fun BrushSizeDialog(
 
             Spacer(Modifier.height(8.dp))
 
-            listOf(4, 8, 12, 20, 32).forEach { size ->
+            listOf(4, 8, 12).forEach { size ->
                 Button(
                     onClick = {
                         onSizeSelected(size)
