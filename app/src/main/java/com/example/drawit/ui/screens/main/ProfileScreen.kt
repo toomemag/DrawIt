@@ -2,6 +2,7 @@ package com.example.drawit.ui.screens.main
 
 import android.app.Activity
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -93,33 +92,170 @@ fun ProfileScreen(
 
     // preview support
     DrawitTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            val user = firebaseAuth.getCurrentUser()
-            Row(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                    .fillMaxSize()
             ) {
-                Text(
-                    text = user?.displayName ?: "Username",
-                    style = MaterialTheme.typography.displayLarge,
+                val user = firebaseAuth.getCurrentUser()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = user?.displayName ?: "Username",
+                        style = MaterialTheme.typography.displayLarge,
+                    )
+
+                    val pInfo = ctx.packageManager.getPackageInfo(ctx.packageName, 0)
+                    val versionName = pInfo.versionName ?: "<not found>"
+                    val versionCode = pInfo.longVersionCode
+                    Text(
+                        text = "$versionName - $versionCode",
+                        style = MaterialTheme.typography.displayMedium,
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                    )
+                }
+
+                SecondaryTabRow(
+                    tabs = {
+                        Tab(
+                            selected = selected == 0,
+                            onClick = {
+                                selected = 0
+                            }
+                        ) {
+                            Text(
+                                text = "Uploaded",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                        }
+
+                        Tab(
+                            selected = selected == 1,
+                            onClick = {
+                                selected = 1
+                            }
+                        ) {
+                            Text(
+                                text = "Drafts",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                        }
+                    },
+                    selectedTabIndex = selected,
+                    modifier = Modifier
+                        .height(40.dp)
                 )
 
-                val pInfo = ctx.packageManager.getPackageInfo(ctx.packageName, 0)
-                val versionName = pInfo.versionName ?: "<not found>"
-                val versionCode = pInfo.longVersionCode
-                Text(
-                    text = "$versionName - $versionCode",
-                    style = MaterialTheme.typography.displayMedium,
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                )
-                IconButton(onClick = {
+                when (selected) {
+                    0 -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Top
+                        ) {
+                            val user = firebaseAuth.getCurrentUser()
+                            if ( user == null ) {
+                                Text(
+                                    text = "Something went wrong.",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                return@Column
+                            }
+
+                            LaunchedEffect(user.uid) {
+                                // todo: route userid, rn no friends support
+
+                                // don't show loading state on refresh if we already have data
+                                if (fetchedPaintings.value is NetworkResult.Success) {
+                                    isRefreshing.value = true
+                                    fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                    isRefreshing.value = false
+                                } else {
+                                    fetchedPaintings.value = firestore.getUserPaintings(user.uid)
+                                }
+                            }
+
+
+
+
+                            when ( val result = fetchedPaintings.value ) {
+                                is NetworkResult.Success<*> -> {
+                                    // unsafe whatever
+                                    val userPaintings = result.data as List< Painting >
+
+                                    renderUploadedPaintings(
+                                        userPaintings = userPaintings,
+                                        firestore = firestore
+                                    )
+                                }
+                                is NetworkResult.Error -> {
+                                    // todo: could toast
+                                    Text(
+                                        text = "Error fetching paintings.${result.message}",
+                                        style = MaterialTheme.typography.displayMedium,
+                                        color = MaterialTheme.colorScheme.error,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                                is NetworkResult.Loading -> {
+                                    if (!isRefreshing.value) {
+                                        Text(
+                                            text = "Loading paintings...",
+                                            style = MaterialTheme.typography.displayMedium,
+                                            color = MaterialTheme.colorScheme.onBackground,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    } else {
+                                        // Show cached data while refreshing
+                                        if (fetchedPaintings.value is NetworkResult.Success<*>) {
+                                            renderUploadedPaintings(
+                                                userPaintings = (fetchedPaintings.value as NetworkResult.Success<*>).data as List<Painting>,
+                                                firestore = firestore
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    1 -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = 10.dp)
+                        ) {
+                            val scope = rememberCoroutineScope()
+
+                            PaintingGridGallery(
+                                paintings = paintings,
+                                onPaintingClick = { painting ->
+                                    val intent = Intent(ctx, PaintingActivity::class.java).apply {
+                                        putExtra("paintingId", painting.id)
+                                    }
+                                    ctx.startActivity(intent)
+                                },
+                                onPaintingDelete = { painting ->
+                                    scope.launch(Dispatchers.IO) {
+                                        paintingsRepository?.deletePainting(painting)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = {
                     scope.launch {
                         firebaseAuth.logout()
                         val activity = (ctx as? Activity)
@@ -128,141 +264,16 @@ fun ProfileScreen(
                         ctx.startActivity(intent)
                         activity?.finish()
                     }
-                }) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
-                }
-            }
-
-            SecondaryTabRow(
-                tabs = {
-                    Tab(
-                        selected = selected == 0,
-                        onClick = {
-                            selected = 0
-                        }
-                    ) {
-                        Text(
-                            text = "Uploaded",
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                    }
-
-                    Tab(
-                        selected = selected == 1,
-                        onClick = {
-                            selected = 1
-                        }
-                    ) {
-                        Text(
-                            text = "Drafts",
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                    }
                 },
-                selectedTabIndex = selected,
                 modifier = Modifier
-                    .height(40.dp)
-            )
-
-            when (selected) {
-                0 -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Top
-                    ) {
-                        if ( user == null ) {
-                            Text(
-                                text = "Something went wrong.",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            return@Column
-                        }
-
-                        LaunchedEffect(user.uid) {
-                            // todo: route userid, rn no friends support
-
-                            // don't show loading state on refresh if we already have data
-                            if (fetchedPaintings.value is NetworkResult.Success) {
-                                isRefreshing.value = true
-                                fetchedPaintings.value = firestore.getUserPaintings(user.uid)
-                                isRefreshing.value = false
-                            } else {
-                                fetchedPaintings.value = firestore.getUserPaintings(user.uid)
-                            }
-                        }
-
-
-
-
-                        when ( val result = fetchedPaintings.value ) {
-                            is NetworkResult.Success<*> -> {
-                                // unsafe whatever
-                                val userPaintings = result.data as List< Painting >
-
-                                renderUploadedPaintings(
-                                    userPaintings = userPaintings,
-                                    firestore = firestore
-                                )
-                            }
-                            is NetworkResult.Error -> {
-                                // todo: could toast
-                                Text(
-                                    text = "Error fetching paintings.${result.message}",
-                                    style = MaterialTheme.typography.displayMedium,
-                                    color = MaterialTheme.colorScheme.error,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                            is NetworkResult.Loading -> {
-                                if (!isRefreshing.value) {
-                                    Text(
-                                        text = "Loading paintings...",
-                                        style = MaterialTheme.typography.displayMedium,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        textAlign = TextAlign.Center
-                                    )
-                                } else {
-                                    // Show cached data while refreshing
-                                    if (fetchedPaintings.value is NetworkResult.Success<*>) {
-                                        renderUploadedPaintings(
-                                            userPaintings = (fetchedPaintings.value as NetworkResult.Success<*>).data as List<Painting>,
-                                            firestore = firestore
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                1 -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 10.dp)
-                    ) {
-                        val scope = rememberCoroutineScope()
-
-                        PaintingGridGallery(
-                            paintings = paintings,
-                            onPaintingClick = { painting ->
-                                val intent = Intent(ctx, PaintingActivity::class.java).apply {
-                                    putExtra("paintingId", painting.id)
-                                }
-                                ctx.startActivity(intent)
-                            },
-                            onPaintingDelete = { painting ->
-                                scope.launch(Dispatchers.IO) {
-                                    paintingsRepository?.deletePainting(painting)
-                                }
-                            }
-                        )
-                    }
-                }
+                    .align(Alignment.TopEnd)
+                    .padding(30.dp),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.onBackground),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) {
+                Text("Log Out")
             }
         }
     }
