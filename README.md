@@ -19,7 +19,18 @@
 - [Project Structure](#project-structure)
 - [Members](#members)
    
-      
+
+
+## Description
+  Community drawing app inspired by BeReal. Every day there is a random theme, where you have 10 minutes to draw based on the theme. Also an option to draw whatever you want.    
+  Features are:    
+  1.  Simple and effective drawing - paint, erase, fill, color picker and layers.    
+  2.  Interactive effects - Bring your drawing to life with real time effects, manipulate layers with gyroscope.    
+  3.  Daily Theme - Each day a new theme to work on.    
+  4.  Community feed - See all sorts of drawings made by other artists.    
+  5.  Friend feed - See what your friends have drawn.    
+
+
 ---
 ## Installation
 - ### Dependencies
@@ -126,24 +137,13 @@ Log out button, next to username.
     
 ## Project Structure
 
-Todo
+- ## Members
+  ### Erki Toomemägi (toomemag)
+  ### Anton Otrokov (Anton Otrokov)
+  ### Mark Riispapp (markriis, 11x1)
+  ### Romet Vislapuu (Romet-Vislapuu)
 
 
-
-## Members
-### Erki Toomemägi (toomemag)
-### Anton Otrokov (Anton Otrokov)
-### Mark Riispapp (markriis, 11x1)
-### Romet Vislapuu (Romet-Vislapuu)
-
-## Description
-Community drawing app inspired by BeReal. Every day there is a random theme, where you have 10 minutes to draw based on the theme. Also an option to draw whatever you want.
-Features are:
-1.  Simple and effective drawing - paint, erase, fill, color picker and layers.
-2.  Interactive effects - Bring your drawing to life with real time effects, manipulate layers with gyroscope.
-3.  Daily Theme - Each day a new theme to work on.
-4.  Community feed - See all sorts of drawings made by other artists.
-5.  Friend feed - See what your friends have drawn.
   
 
 
