@@ -67,11 +67,11 @@ Log out button, next to username.
    <img width="259" height="58" alt="image" src="https://github.com/user-attachments/assets/5c15bb51-a6a9-4b6a-a447-a966d2233340" />
    
   Different drawing tools, from left to right:
-  - **Pencil**: 1 pixel wide drawing tool.
-  - **Brush**: Resizable drawing tool, allowing to create bigger brushes.
-  - **Fill**: Fills a closed area with a single colour.
-  - **Eraser**: Erases pixels.
-  - **Color Palette**: From here the user can choose colors and the transparency.
+    - **Pencil**: 1 pixel wide drawing tool.
+    - **Brush**: Resizable drawing tool, allowing to create bigger brushes.
+    - **Fill**: Fills a closed area with a single colour.
+    - **Eraser**: Erases pixels.
+    - **Color Palette**: From here the user can choose colors and the transparency.
  
  
     
