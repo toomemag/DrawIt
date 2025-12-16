@@ -3,7 +3,9 @@
 
 # Table of contents
 - [Installation](#installation)
-
+  - [Dependencies](#dependencies)
+  - [Instrucions](#instrucions)
+- [Usage Guide](#usage-guide)
 
 ---
 ## Installation
