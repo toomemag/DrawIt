@@ -86,7 +86,15 @@ Log out button, next to username.
 
     
   - ### Effects
- 
+    <img width="342" height="215" alt="image" src="https://github.com/user-attachments/assets/099bd0ce-13fc-4ce9-8ccf-a8dbc53ef9d3" />
+
+    Each layer can have different effects applied on them. Effects are sensors, that detect changes made to the user's phone, like phone rotation.
+
+    <img width="325" height="398" alt="image" src="https://github.com/user-attachments/assets/b21f4725-96c3-419d-99ed-010e1d3e077a" />
+
+    Each effect can change the property of a currently active layer.
+    Currently all effects can change the layers X position, Y position, layer rotation, layer scale and layer's transparency value.
+   
     
 - ### Sharing
 
