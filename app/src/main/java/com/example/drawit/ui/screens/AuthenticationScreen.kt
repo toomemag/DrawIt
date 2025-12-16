@@ -41,7 +41,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 fun AuthenticationScreen(viewmodel: AuthenticationViewmodel? = null) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
-    val passwordVisible = remember { mutableStateOf(true) }
+    val passwordVisible = remember { mutableStateOf(false) }
     val loading = remember { mutableStateOf(false) }
     val error = remember { mutableStateOf<String?>(null) }
     val isInLogin = remember { mutableStateOf(true) }
