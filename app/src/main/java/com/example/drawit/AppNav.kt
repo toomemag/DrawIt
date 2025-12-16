@@ -15,7 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.drawit.data.local.room.repository.PaintingsRepository
+import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
 import com.example.drawit.domain.model.authentication.AuthenticationRepository
 import com.example.drawit.ui.screens.AuthenticationScreen
 import com.example.drawit.ui.screens.MainViewScreen
@@ -25,7 +25,7 @@ import com.example.drawit.ui.viewmodels.auth.AuthenticationVMFactory
 @Composable
 fun AppNav(
     navCoordinator: NavCoordinator,
-    paintingsRepository: PaintingsRepository,
+    paintingsRepository: LocalPaintingsRepository,
     authenticationRepository: AuthenticationRepository,
     selectedTab: Tab
 ) {

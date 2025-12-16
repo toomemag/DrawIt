@@ -8,9 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class PaintingsRepository (
-    private val paintingDao: PaintingDao,
-    private val firestoreDatabase: FirebaseFirestore
+class LocalPaintingsRepository (
+    private val paintingDao: PaintingDao
 ) {
     fun getAllPaintings(): Flow<List<Painting>> {
         return paintingDao.getAllPaintings().map { list ->

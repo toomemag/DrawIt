@@ -1,11 +1,16 @@
 package com.example.drawit.data.remote.firestore.mapper
 
+import android.util.Base64
 import com.example.drawit.data.local.room.entity.LayerBindingEntity
 import com.example.drawit.data.local.room.entity.PaintingEntity
 import com.example.drawit.data.local.room.entity.PaintingLayerEntity
+import com.example.drawit.data.local.room.mapper.toDomain
 import com.example.drawit.data.remote.firestore.model.LayerBindingFirestoreDto
 import com.example.drawit.data.remote.firestore.model.LayerFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
+import com.example.drawit.domain.model.Layer
+import com.example.drawit.domain.model.LayerEffectBinding
+import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.domain.model.Painting
 import com.google.firebase.Timestamp
 
@@ -21,6 +26,31 @@ fun PaintingFirestoreDto.toEntity(): PaintingEntity = PaintingEntity(
     theme = this.theme,
     mode = this.mode,
 )
+
+fun PaintingFirestoreDto.toDomain(): Painting {
+    val p = Painting(
+        id = this.id,
+        timeTaken = this.timeTaken,
+        size = this.size,
+        theme = this.theme,
+        mode = this.mode,
+        layers = mutableListOf()
+    )
+
+    val mappedLayers = this.layers.map { layerDto ->
+        val layerEnt = layerDto.toEntity(p)
+        val bindingsEntList = layerDto.bindings.flatMap { (effectType, list) ->
+            list.map { bindingDto ->
+                bindingDto.toEntity(layerId = layerEnt.id, effectType = effectType)
+            }
+        }
+        layerEnt.toDomain(bindingsEntList)
+    }
+
+    p.layers.addAll(mappedLayers)
+
+    return p
+}
 
 /**
  * Maps a LayerFirestoreDto to a PaintingLayerEntity associated with the given painting.
@@ -70,4 +100,12 @@ fun LayerBindingEntity.toFirestoreDto(): LayerBindingFirestoreDto = LayerBinding
     id = this.id,
     effectInputIndex = this.effectOutputIndex,
     layerTransformInput = this.layerTransformInput
+)
+
+fun LayerBindingFirestoreDto.toEntity(layerId: String, effectType: Int): LayerBindingEntity = LayerBindingEntity(
+    id = this.id,
+    layerId = layerId,
+    effectOutputIndex = this.effectInputIndex,
+    layerTransformInput = this.layerTransformInput,
+    effectType = effectType
 )

@@ -2,6 +2,7 @@ package com.example.drawit.data.remote.repository
 
 import com.example.drawit.data.local.room.dao.PaintingDao
 import com.example.drawit.data.local.room.mapper.toEntityWithRelations
+import com.example.drawit.data.remote.firestore.mapper.toDomain
 import com.example.drawit.data.remote.firestore.mapper.toEntity
 import com.example.drawit.data.remote.firestore.mapper.toFirestoreDto
 import com.example.drawit.data.remote.firestore.model.PaintingFirestoreDto
@@ -60,6 +61,23 @@ class FirestoreDrawItRepository(
             }
 
             return NetworkResult.Success(Unit)
+        } catch ( e: Exception ) {
+            NetworkResult.Error( e.message ?: "Unknown error" )
+        }
+    }
+
+    suspend fun getUserPaintings( userId: String ): NetworkResult< List< Painting > > {
+        return try {
+            val snapshot = db.collection(PAINTINGS_COLLECTION)
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+
+            val paintings = snapshot.documents.mapNotNull {
+                it.toObject(PaintingFirestoreDto::class.java)
+            }.map { it.toDomain() }
+
+            NetworkResult.Success(paintings)
         } catch ( e: Exception ) {
             NetworkResult.Error( e.message ?: "Unknown error" )
         }

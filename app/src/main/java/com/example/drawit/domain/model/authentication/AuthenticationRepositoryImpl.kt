@@ -39,4 +39,6 @@ class AuthenticationRepositoryImpl(
             NetworkResult.Error(e.localizedMessage ?: "An unknown error occurred")
         }
     }
+
+    override fun getCurrentUser( ) = firebaseAuth.currentUser
 }

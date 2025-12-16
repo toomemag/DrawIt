@@ -2,7 +2,8 @@ package com.example.drawit
 
 import android.app.Application
 import com.example.drawit.data.local.AppDatabaseProvider
-import com.example.drawit.data.local.room.repository.PaintingsRepository
+import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
+import com.example.drawit.data.remote.repository.FirestoreDrawItRepository
 import com.example.drawit.domain.model.authentication.AuthenticationRepositoryImpl
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
@@ -17,11 +18,16 @@ class DrawItApplication : Application() {
         AuthenticationRepositoryImpl(applicationContext, firebaseAuth)
     }
 
-
     val paintingsRepository by lazy {
-        PaintingsRepository(
-            paintingDao = database.paintingDao(),
-            firestoreDatabase = firestoreDatabase
+        LocalPaintingsRepository(
+            paintingDao = database.paintingDao()
+        )
+    }
+
+    val firestorePaintingsRepository by lazy {
+        FirestoreDrawItRepository(
+            db = firestoreDatabase,
+            dao = database.paintingDao()
         )
     }
 

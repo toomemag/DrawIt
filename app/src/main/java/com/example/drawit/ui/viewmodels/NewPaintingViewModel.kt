@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.set
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.drawit.data.local.room.repository.PaintingsRepository
+import com.example.drawit.data.local.room.repository.LocalPaintingsRepository
 import com.example.drawit.domain.model.Layer
 import com.example.drawit.domain.model.LayerTransformInput
 import com.example.drawit.domain.model.Painting
@@ -34,8 +34,6 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.max
-import java.util.Timer
-import java.util.TimerTask
 
 enum class CanvasGestureState {
     IDLE,
@@ -45,8 +43,8 @@ enum class CanvasGestureState {
 
 class NewPaintingViewModel(
     val effectManager: EffectManager? = null,
-    private val paintingsRepository: PaintingsRepository,
-    initialPainting: Painting? = null ,
+    private val paintingsRepository: LocalPaintingsRepository,
+    initialPainting: Painting? = null,
     private val isDarkMode: Boolean? = null
 
     ) : ViewModel( ) {
