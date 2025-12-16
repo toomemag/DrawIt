@@ -173,10 +173,8 @@ class FirestoreDrawItRepository(
         }
     }
 
-    suspend fun acceptFriendRequest(userId: String, requestId: String): NetworkResult<String?> {
+    suspend fun acceptFriendRequest(requestId: String): NetworkResult<String?> {
         return try {
-            val user = FirebaseAuth.getInstance().currentUser
-            android.util.Log.d("AUTH", "UID: ${user?.uid}")
             val functions = FirebaseFunctions.getInstance()
 
             val data = hashMapOf(
