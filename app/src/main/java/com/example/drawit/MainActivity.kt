@@ -16,6 +16,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +29,6 @@ import com.example.drawit.ui.HoveringNavBar
 import com.example.drawit.ui.screens.Tab
 import com.example.drawit.ui.theme.DrawitTheme
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import kotlin.math.hypot
 import kotlin.math.pow
@@ -49,9 +49,6 @@ class EaseOutBackInterpolator(
 }
 
 class MainActivity : ComponentActivity() {
-    // firebase auth instance
-    private lateinit var auth: FirebaseAuth
-
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
 
@@ -85,27 +82,23 @@ class MainActivity : ComponentActivity() {
 
         val app = (application as DrawItApplication)
 
-        auth = Firebase.auth
-
-        val currentUser = auth.currentUser
-
-        if (currentUser == null) {
-            auth.signInWithEmailAndPassword("test@test.ee", "[redacted]").addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Sign in success
-                } else {
-                    // If sign in fails, display a message to the user.
-                    android.util.Log.e( "AuthFlow", "firebase auth failed: ${task.exception}")
-                }
-            }
-        }
-
         setContent {
             DrawitTheme {
+                var isLoggedIn by remember { mutableStateOf(app.authenticationRepository.isLoggedIn()) }
                 var selectedTab by remember { mutableStateOf(Tab.Feed) }
+
+                LaunchedEffect(Unit) {
+                    Firebase.auth.addAuthStateListener { auth ->
+                        isLoggedIn = auth.currentUser != null
+                    }
+                }
 
                 Scaffold(
                     floatingActionButton = {
+                        if ( !isLoggedIn) {
+                            return@Scaffold
+                        }
+
                         FloatingActionButton(
                             onClick = Intent(this@MainActivity, PaintingActivity::class.java).let { intent ->
                                 {
@@ -119,6 +112,11 @@ class MainActivity : ComponentActivity() {
                     floatingActionButtonPosition = FabPosition.End,
 
                     bottomBar = {
+                        if ( !isLoggedIn) {
+                            return@Scaffold
+                        }
+
+
                         HoveringNavBar(
                             activeTab = selectedTab,
                             onSelect = { tab ->
@@ -129,7 +127,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 20.dp )
                         )
                     }
-                ) { innerPadding ->
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -139,6 +137,7 @@ class MainActivity : ComponentActivity() {
                             navCoordinator = app.navCoordinator,
                             paintingsRepository = app.paintingsRepository,
                             selectedTab = selectedTab,
+                            authenticationRepository = app.authenticationRepository
                         )
                     }
 

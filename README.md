@@ -1,7 +1,7 @@
 # DrawIt
 Repository for DrawIt
 Members:
-Erki Toomemägi (toomemag), Anton Otrokov (Anton Otrokov), Mark Riispapp (markriis, 11x1), Romet Vislapuu
+Erki Toomemägi (toomemag), Anton Otrokov (Anton Otrokov), Mark Riispapp (markriis, 11x1), Romet Vislapuu (Romet-Vislapuu)
 
 
 ## Description
