@@ -11,7 +11,9 @@
     - [Drawing tools](#drawing-tools)
     - [Layers](#layers)
     - [Effects](#effects)
+    - [Saving](#saving)
   - [Sharing](#sharing)
+    - [Publishing](#publishing)
     - [Profile](#profile)
     - [Friends](#friends)
 - [Project Structure](#project-structure)
@@ -93,17 +95,34 @@ Log out button, next to username.
     <img width="325" height="398" alt="image" src="https://github.com/user-attachments/assets/b21f4725-96c3-419d-99ed-010e1d3e077a" />
 
     Each effect can change the property of a currently active layer.
+    
     Currently all effects can change the layers X position, Y position, layer rotation, layer scale and layer's transparency value.
+
+    Effects can be removed from layers.
+
+  - ### Saving
+    <img width="359" height="378" alt="image" src="https://github.com/user-attachments/assets/be5ab6bf-739f-4630-9a18-a6de7054ce77" />
+
+    Images can be saving after pressing the back button or the "<" icon. Images saved this way will be saved under "Drafts".
+    <img width="401" height="195" alt="image" src="https://github.com/user-attachments/assets/c76eb778-e0a1-41ba-a42a-d54eec116e0c" />
    
     
 - ### Sharing
+  - ### Publishing
+    <img width="344" height="383" alt="image" src="https://github.com/user-attachments/assets/8fbed57f-c0a3-4879-8184-5d0bcf0740c1" />
 
-  
+    After the user is finished with their painting, they have the option to publish their work of art.
+
   - ### Profile
- 
-    
+    <img width="389" height="887" alt="image" src="https://github.com/user-attachments/assets/21ea8053-8387-4fb0-8590-ff0bcdc98400" />
+
+    Profile page shows the users drafts and uploaded drawings.
+
   - ### Friends
- 
+   <img width="388" height="888" alt="image" src="https://github.com/user-attachments/assets/26212c20-455e-4f6c-8f5b-48a8bfd01410" />
+
+   From freinds tab the user can send friend requests, accept on deny other people requests and get general information about their friends.
+
     
 ## Project Structure
 
