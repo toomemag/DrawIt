@@ -11,24 +11,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.drawit.data.local.room.repository.PaintingsRepository
+import com.example.drawit.domain.model.authentication.AuthenticationRepository
+import com.example.drawit.ui.screens.AuthenticationScreen
 import com.example.drawit.ui.screens.MainViewScreen
 import com.example.drawit.ui.screens.Tab
+import com.example.drawit.ui.viewmodels.auth.AuthenticationVMFactory
 
 @Composable
 fun AppNav(
     navCoordinator: NavCoordinator,
     paintingsRepository: PaintingsRepository,
+    authenticationRepository: AuthenticationRepository,
     selectedTab: Tab
 ) {
     val navController = rememberNavController()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val ctx = LocalContext.current
     // todo: auth later, step 5
-    val startDestination = true.let { if (it) Screen.MainScreen.route else Screen.LoginScreen.route }
+    val startDestination = if (authenticationRepository.isLoggedIn()) Screen.MainScreen.route else Screen.AuthenticationScreen.route
 
     LaunchedEffect(navController) {
         navCoordinator.events.flowWithLifecycle(lifecycle)
@@ -56,11 +61,27 @@ fun AppNav(
                             popUpTo(0)
                         }
                     }
+                    is NavEvent.ToAuthView -> {
+                        navController.navigate(Screen.AuthenticationScreen.route) {
+                            popUpTo(0)
+                        }
+                    }
                 }
             }
     }
 
     NavHost(navController, startDestination = startDestination) {
+        composable(Screen.AuthenticationScreen.route) {
+            AuthenticationScreen(
+                viewmodel = viewModel(
+                    factory = AuthenticationVMFactory(
+                        navCoordinator = navCoordinator,
+                        authenticationRepository = authenticationRepository
+                    )
+                )
+            )
+        }
+
         composable(Screen.MainScreen.route) {
             MainViewScreen(
                 paintingsRepository = paintingsRepository,

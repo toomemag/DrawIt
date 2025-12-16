@@ -2,7 +2,6 @@ package com.example.drawit.data.local.room.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.Relation
 import java.util.UUID
 
 @Entity(tableName = "paintings")

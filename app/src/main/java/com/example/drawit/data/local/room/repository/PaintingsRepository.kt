@@ -4,11 +4,13 @@ import com.example.drawit.data.local.room.dao.PaintingDao
 import com.example.drawit.data.local.room.mapper.toDomain
 import com.example.drawit.data.local.room.mapper.toEntityWithRelations
 import com.example.drawit.domain.model.Painting
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class PaintingsRepository (
-    private val paintingDao: PaintingDao
+    private val paintingDao: PaintingDao,
+    private val firestoreDatabase: FirebaseFirestore
 ) {
     fun getAllPaintings(): Flow<List<Painting>> {
         return paintingDao.getAllPaintings().map { list ->
