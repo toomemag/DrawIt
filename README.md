@@ -77,10 +77,12 @@ Log out button, next to username.
     
   - ### Layers
     <img width="287" height="107" alt="image" src="https://github.com/user-attachments/assets/84cef868-e7a7-4e17-b1db-7f998340f2c4" />
-     A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
 
- ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)  
- Layer draw order can be changed, by holding down the current layer and changing its position.
+    A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
+
+  ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)
+  
+   Layer draw order can be changed, by holding down the current layer and changing its position.
 
     
   - ### Effects
