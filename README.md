@@ -80,9 +80,9 @@ Log out button, next to username.
 
     A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
 
-  ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)
+    ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)
   
-   Layer draw order can be changed, by holding down the current layer and changing its position.
+    Layer draw order can be changed, by holding down the current layer and changing its position.
 
     
   - ### Effects
