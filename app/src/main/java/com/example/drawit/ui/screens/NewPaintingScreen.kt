@@ -46,6 +46,7 @@ import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +85,7 @@ import com.example.drawit.utils.invert
 import com.example.drawit.utils.modify
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import  com.example.drawit.ui.dialogs.BrushSizeDialog
 
 
 @Composable
@@ -109,11 +111,19 @@ fun NewPaintingScreen(
     val isNewEffectDialogOpen by viewmodel.isNewEffectDialogOpen.collectAsState()
     val editBindingDialog by viewmodel.editBindingDialog.collectAsState()
     val scope = rememberCoroutineScope()
+    //var isBrushMenuOpen by remember { mutableStateOf(false) }
+    val isBrushMenuOpen by viewmodel.isBrushMenuOpen.collectAsState()
+
 
     if (isSystemInDarkTheme()) {
         viewmodel.setColor(Color(0xFFffffff))
     } else {
         viewmodel.setColor(Color(0xFF000000))
+    }
+    LaunchedEffect(currentTool) {
+        if (currentTool != PaintTool.BRUSH) {
+            viewmodel.closeBrushMenu()
+        }
     }
 
     DrawitTheme {
@@ -136,6 +146,17 @@ fun NewPaintingScreen(
                 }
 
                 else -> {}
+            }
+            if (isBrushMenuOpen) {
+                BrushSizeDialog(
+                    currentSize = viewmodel.getBrushSize(),
+                    onSizeSelected = { size ->
+                        viewmodel.setBrushSize(size)
+                    },
+                    onDismiss = {
+                        viewmodel.closeBrushMenu()
+                    }
+                )
             }
 
             when (isPaintingPaused) {
@@ -450,8 +471,10 @@ fun NewPaintingScreen(
                                                 }
                                                 else{
                                                     viewmodel.paintAt(
-                                                        activeLayerIdx,
-                                                        bitmapPos,
+                                                        layerIndex= activeLayerIdx,
+                                                        layerPos= bitmapPos,
+                                                        currentTool = viewmodel.currentTool.value,
+                                                        brushSize = viewmodel.getBrushSize()
                                                     )
                                                 }
 
@@ -484,7 +507,12 @@ fun NewPaintingScreen(
                                                         viewmodel.paintAt(
                                                             activeLayerIdx,
                                                             bitmapPos,
-                                                            false
+                                                            false,
+                                                            viewmodel.currentTool.value,
+                                                            viewmodel.getBrushSize()
+
+
+
                                                         )}
                                                         viewmodel.endStroke(activeLayerIdx)
                                                     }
@@ -536,7 +564,16 @@ fun NewPaintingScreen(
                     )
 
                     ToolButton(
-                        onClick = { viewmodel.setTool(PaintTool.BRUSH) },
+                        onClick = {
+                            if (currentTool != PaintTool.BRUSH) {
+                                viewmodel.setTool(PaintTool.BRUSH)
+                                viewmodel.closeBrushMenu()
+                            }
+                            else {
+                                viewmodel.toggleBrushMenu()
+                            }
+                            viewmodel.setTool(PaintTool.BRUSH)
+                             },
                         isSelected = currentTool == PaintTool.BRUSH,
                         icon = Icons.Default.Brush,
                         iconContentDescription = "brush",

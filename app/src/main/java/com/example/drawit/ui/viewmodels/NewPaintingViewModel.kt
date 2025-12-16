@@ -87,6 +87,9 @@ class NewPaintingViewModel(
     private val _isLayerEffectsDialogOpen = MutableStateFlow(false)
     val isLayerEffectsDialogOpen = _isLayerEffectsDialogOpen.asStateFlow()
 
+    private val _isBrushMenuOpen = MutableStateFlow(false)
+    val isBrushMenuOpen = _isBrushMenuOpen.asStateFlow()
+
     // current layer effects -> clicked add new
     private val _isNewEffectDialogOpen = MutableStateFlow(false)
     val isNewEffectDialogOpen = _isNewEffectDialogOpen.asStateFlow()
@@ -141,6 +144,10 @@ class NewPaintingViewModel(
 
     fun openBindingDialog(effect: BaseEffect<*>) { _editBindingDialog.value = effect }
     fun closeBindingDialog() { _editBindingDialog.value = null }
+
+    fun openBrushMenu() { _isBrushMenuOpen.value = true }
+    fun closeBrushMenu() { _isBrushMenuOpen.value = false }
+    fun toggleBrushMenu() { _isBrushMenuOpen.value = !_isBrushMenuOpen.value }
     fun hasDrawn() = hasPainted
 
     fun savePaintingToLocalDatabase() {
@@ -338,8 +345,10 @@ class NewPaintingViewModel(
      * Handle painting on the active layer
      * @param layerIndex The index of the layer to paint on
      * @param layerPos The position on the layer bitmap to paint at as a pair (x, y)
+     * @param currentTool checks if brush or pen
+     * @param brushSize only usefull when the tool is brush.
      */
-    fun paintAt(layerIndex: Int, layerPos: Pair<Int, Int>, isPointerDown: Boolean = true) {
+    fun paintAt(layerIndex: Int, layerPos: Pair<Int, Int>, isPointerDown: Boolean = true, currentTool: PaintTool,brushSize: Int = 1) {
         hasPainted = true
 
         val layer = canvasManager.getLayer(layerIndex) ?: return
@@ -365,6 +374,13 @@ class NewPaintingViewModel(
                     val interpX = (1 - t) * lastX + t * layerPos.first
                     val interpY = (1 - t) * lastY + t * layerPos.second
 
+                    if(currentTool== PaintTool.PEN){
+                        layer.bitmap[interpX.toInt(), interpY.toInt()] = canvasManager.getColor()
+                    }
+                    else{
+                        stampCircle(layer.bitmap,interpX.toInt(),interpY.toInt(),brushSize,canvasManager.getColor())
+                    }
+
                     layer.bitmap[interpX.toInt(), interpY.toInt()] = canvasManager.getColor()
                 }
             }
@@ -386,6 +402,30 @@ class NewPaintingViewModel(
             }
         }
 
+    }
+
+    /**
+     * used in paintAt() when using a brush
+     * creates a circle of the selected color and size
+     */
+    private fun stampCircle(bitmap: Bitmap, centerX: Int, centerY: Int, radius: Int, color: Int) {
+        val r = radius.coerceAtLeast(1)
+        val r2 = r * r
+
+        val xMin = (centerX - r).coerceAtLeast(0)
+        val xMax = (centerX + r).coerceAtMost(bitmap.width - 1)
+        val yMin = (centerY - r).coerceAtLeast(0)
+        val yMax = (centerY + r).coerceAtMost(bitmap.height - 1)
+
+        for (x in xMin..xMax) {
+            val dx = x - centerX
+            for (y in yMin..yMax) {
+                val dy = y - centerY
+                if (dx * dx + dy * dy <= r2) {
+                    bitmap[x, y] = color
+                }
+            }
+        }
     }
     /**
      * Handle erasing on the active layer

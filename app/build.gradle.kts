@@ -56,6 +56,7 @@ dependencies {
     // compose bill of materials
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.unit)
+    implementation(libs.androidx.compose.runtime)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
     // compose UI

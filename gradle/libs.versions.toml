@@ -28,6 +28,7 @@ kotlin = "2.2.21"
 agp = "8.13.0"
 uiUnit = "1.9.4"
 ksp = "2.2.20-2.0.4"
+runtime = "1.10.0"
 
 
 [libraries]
@@ -84,6 +85,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 # android studio refactor from https://github.com/square/retrofit/blob/trunk/retrofit-converters/gson/README.md
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 
 [plugins]
