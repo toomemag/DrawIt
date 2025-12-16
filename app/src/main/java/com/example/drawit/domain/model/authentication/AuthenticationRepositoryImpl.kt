@@ -40,5 +40,18 @@ class AuthenticationRepositoryImpl(
         }
     }
 
+    override suspend fun deleteAccount(): NetworkResult<Unit> {
+        if ( !isLoggedIn() ) {
+            return NetworkResult.Error("No user is currently logged in.")
+        }
+
+        return try {
+            firebaseAuth.currentUser?.delete()?.await()
+            NetworkResult.Success(Unit)
+        } catch (e: Exception) {
+            NetworkResult.Error(e.localizedMessage ?: "An unknown error occurred")
+        }
+    }
+
     override fun getCurrentUser( ) = firebaseAuth.currentUser
 }

@@ -10,5 +10,7 @@ interface AuthenticationRepository {
     suspend fun logout(): NetworkResult<Unit>
     suspend fun register(email: String, password: String): NetworkResult<Unit>
 
+    suspend fun deleteAccount(): NetworkResult<Unit>
+
     fun getCurrentUser(): FirebaseUser?
 }
