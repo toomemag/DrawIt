@@ -567,18 +567,15 @@ fun NewPaintingScreen(
                         onClick = {
                             if (currentTool != PaintTool.BRUSH) {
                                 viewmodel.setTool(PaintTool.BRUSH)
-                                viewmodel.closeBrushMenu()
-                            }
-                            else {
+                                viewmodel.openBrushMenu()
+                            } else {
                                 viewmodel.toggleBrushMenu()
                             }
-                            viewmodel.setTool(PaintTool.BRUSH)
-                             },
+                        },
                         isSelected = currentTool == PaintTool.BRUSH,
                         icon = Icons.Default.Brush,
                         iconContentDescription = "brush",
                         buttonModifier = Modifier.testTag("brushButton")
-
                     )
 
                     ToolButton(
