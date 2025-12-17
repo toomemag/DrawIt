@@ -88,6 +88,7 @@ fun ProfileScreen(
     paintingsRepository: LocalPaintingsRepository? = null,
     navController: NavController? = null
 ) {
+    var username by remember { mutableStateOf<String?>(null) }
     var selected by remember { mutableStateOf(0) }
     val paintingsFlow = remember { paintingsRepository?.getAllPaintings() }
     val paintings by paintingsFlow?.collectAsState(initial = emptyList()) ?: mutableStateOf(emptyList())
@@ -101,7 +102,16 @@ fun ProfileScreen(
     val isRefreshing = remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+    LaunchedEffect(firebaseAuth.getCurrentUser()?.uid) {
+        val user = firebaseAuth.getCurrentUser() ?: return@LaunchedEffect
 
+        when (val res = firestore.getUsernameById(user.uid)) {
+            is NetworkResult.Success -> username = res.data
+            is NetworkResult.Error ->
+                android.util.Log.e("ProfileScreen", "Username fetch failed: ${res.message}")
+            else -> {}
+        }
+    }
     // preview support
     DrawitTheme {
         Column(
@@ -117,7 +127,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = user?.displayName ?: "Username",
+                    text = username ?: "Username",
                     style = MaterialTheme.typography.displayLarge,
                 )
 
