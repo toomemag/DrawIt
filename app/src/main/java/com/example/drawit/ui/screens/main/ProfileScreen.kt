@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -186,7 +187,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .height(40.dp)
             )
-
+            Spacer(modifier = Modifier.height(8.dp))
             when (selected) {
                 0 -> {
                     Column(
