@@ -19,6 +19,8 @@
     - [Friends](#friends)
 - [Project Structure](#project-structure)
   - [Members](#members)
+  - [Graphs](#graphs)
+  - [Figma Design](#figma-design)
    
 
 
@@ -91,7 +93,7 @@ Log out button, next to username.
   - ### Layers
     <img width="287" height="107" alt="image" src="https://github.com/user-attachments/assets/84cef868-e7a7-4e17-b1db-7f998340f2c4" />
 
-    A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
+    In order to paint on the layer, a layer must be selected. Layers can be added using the "+" symbol.
 
     ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)
   
@@ -115,6 +117,8 @@ Log out button, next to username.
     <img width="359" height="378" alt="image" src="https://github.com/user-attachments/assets/be5ab6bf-739f-4630-9a18-a6de7054ce77" />
 
     Images can be saving after pressing the back button or the "<" icon. Images saved this way will be saved under "Drafts".
+ 
+    
     <img width="401" height="195" alt="image" src="https://github.com/user-attachments/assets/c76eb778-e0a1-41ba-a42a-d54eec116e0c" />
    
     
@@ -136,23 +140,24 @@ Log out button, next to username.
 
     
 ## Project Structure
-
 - ## Members
   ### Erki Toomemägi (toomemag)
   ### Anton Otrokov (Anton Otrokov)
   ### Mark Riispapp (markriis, 11x1)
   ### Romet Vislapuu (Romet-Vislapuu)
 
+- ## Graphs
+  - ## Sensor graphs
+  <img width="599" height="568" alt="image" src="https://github.com/user-attachments/assets/af1788e8-0cc1-4455-a608-46ad00f71dca" />
 
+  <img width="943" height="412" alt="image" src="https://github.com/user-attachments/assets/5f8217a4-50d8-4821-8bf0-9ad94136b8e0" />
+
+  - ## Sensor Output to Layer Transformations
+  ![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)  
+
+- ## Figma Design  
+  [Figma Design Link](https://www.figma.com/design/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?node-id=1-2&t=MhjCKBsLWlb4n2oP-1)  
+  [Figma Prototype](https://www.figma.com/proto/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?page-id=1%3A2&node-id=4-322&p=f&viewport=1143%2C488%2C0.59&t=PAUF9tpjVYZ7eu66-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=4%3A2)  
+  [Readme About Designs](designs_v1/README.md)  
   
 
-
-## Figma Design  
-[Figma Design Link](https://www.figma.com/design/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?node-id=1-2&t=MhjCKBsLWlb4n2oP-1)  
-[Figma Prototype](https://www.figma.com/proto/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?page-id=1%3A2&node-id=4-322&p=f&viewport=1143%2C488%2C0.59&t=PAUF9tpjVYZ7eu66-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=4%3A2)  
-[Readme About Designs](designs_v1/README.md)  
-  
-  
-# General ideas and notes
-## Sensor Output to Layer Transformations
-![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)
