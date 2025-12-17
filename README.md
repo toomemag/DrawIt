@@ -138,23 +138,25 @@ Log out button, next to username.
 
     
 ## Project Structure
-
 - ## Members
   ### Erki Toomemägi (toomemag)
   ### Anton Otrokov (Anton Otrokov)
   ### Mark Riispapp (markriis, 11x1)
   ### Romet Vislapuu (Romet-Vislapuu)
 
+- ## Sensor graphs
+<img width="599" height="568" alt="image" src="https://github.com/user-attachments/assets/af1788e8-0cc1-4455-a608-46ad00f71dca" />
 
-  
+<img width="943" height="412" alt="image" src="https://github.com/user-attachments/assets/5f8217a4-50d8-4821-8bf0-9ad94136b8e0" />
 
-
-## Figma Design  
-[Figma Design Link](https://www.figma.com/design/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?node-id=1-2&t=MhjCKBsLWlb4n2oP-1)  
-[Figma Prototype](https://www.figma.com/proto/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?page-id=1%3A2&node-id=4-322&p=f&viewport=1143%2C488%2C0.59&t=PAUF9tpjVYZ7eu66-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=4%3A2)  
-[Readme About Designs](designs_v1/README.md)  
-  
-  
-# General ideas and notes
 ## Sensor Output to Layer Transformations
-![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)
+![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)  
+
+
+
+- ## Figma Design  
+  [Figma Design Link](https://www.figma.com/design/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?node-id=1-2&t=MhjCKBsLWlb4n2oP-1)  
+  [Figma Prototype](https://www.figma.com/proto/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?page-id=1%3A2&node-id=4-322&p=f&viewport=1143%2C488%2C0.59&t=PAUF9tpjVYZ7eu66-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=4%3A2)  
+  [Readme About Designs](designs_v1/README.md)  
+  
+
