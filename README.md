@@ -19,6 +19,7 @@
     - [Friends](#friends)
 - [Project Structure](#project-structure)
   - [Members](#members)
+  - [Graphs](#graphs)
    
 
 
@@ -91,7 +92,7 @@ Log out button, next to username.
   - ### Layers
     <img width="287" height="107" alt="image" src="https://github.com/user-attachments/assets/84cef868-e7a7-4e17-b1db-7f998340f2c4" />
 
-    A layer must be selected, in order to paint on the layer. Layers can be added using the "+" symbol.
+    In order to paint on the layer, a layer must be selected. Layers can be added using the "+" symbol.
 
     ![LayerOrder](https://github.com/user-attachments/assets/3434ba71-5344-4634-beb5-fdbf23bb57f1)
   
@@ -144,15 +145,14 @@ Log out button, next to username.
   ### Mark Riispapp (markriis, 11x1)
   ### Romet Vislapuu (Romet-Vislapuu)
 
-- ## Sensor graphs
-<img width="599" height="568" alt="image" src="https://github.com/user-attachments/assets/af1788e8-0cc1-4455-a608-46ad00f71dca" />
+- ## Graphs
+  - ## Sensor graphs
+  <img width="599" height="568" alt="image" src="https://github.com/user-attachments/assets/af1788e8-0cc1-4455-a608-46ad00f71dca" />
 
-<img width="943" height="412" alt="image" src="https://github.com/user-attachments/assets/5f8217a4-50d8-4821-8bf0-9ad94136b8e0" />
+  <img width="943" height="412" alt="image" src="https://github.com/user-attachments/assets/5f8217a4-50d8-4821-8bf0-9ad94136b8e0" />
 
-## Sensor Output to Layer Transformations
-![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)  
-
-
+  - ## Sensor Output to Layer Transformations
+  ![idea image](designs_v1/sensor-output-to-layer-mapping-idea.png)  
 
 - ## Figma Design  
   [Figma Design Link](https://www.figma.com/design/5JaJyUQXZNMOg6Y6oCJqzi/Mobdev?node-id=1-2&t=MhjCKBsLWlb4n2oP-1)  
