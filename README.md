@@ -115,6 +115,8 @@ Log out button, next to username.
     <img width="359" height="378" alt="image" src="https://github.com/user-attachments/assets/be5ab6bf-739f-4630-9a18-a6de7054ce77" />
 
     Images can be saving after pressing the back button or the "<" icon. Images saved this way will be saved under "Drafts".
+ 
+    
     <img width="401" height="195" alt="image" src="https://github.com/user-attachments/assets/c76eb778-e0a1-41ba-a42a-d54eec116e0c" />
    
     
