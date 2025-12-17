@@ -20,6 +20,7 @@
 - [Project Structure](#project-structure)
   - [Members](#members)
   - [Graphs](#graphs)
+  - [Figma Design](#figma-design)
    
 
 
