@@ -53,6 +53,8 @@ fun FriendsScreen(
     var users by remember { mutableStateOf<List<User>>(emptyList()) }
     val error = remember { mutableStateOf<String?>(null) }
 
+    val scope = rememberCoroutineScope() // ✅ NEW (move scope here)
+
     LaunchedEffect(currentUser.uid) {
         when (val res = repo.getUsernameById(currentUser.uid)) {
             is NetworkResult.Success -> currentUsername = res.data
@@ -64,7 +66,24 @@ fun FriendsScreen(
     var sentRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var receivedRequests by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var friends by remember { mutableStateOf<List<Friend>>(emptyList()) }
+    var friendUsernames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    suspend fun refreshFriendUsernames() {
+        val friendIds = friends
+            .flatMap { (it.ids as? List<*>)?.filterIsInstance<String>() ?: emptyList() }
+            .filter { it != currentUser.uid }
+            .distinct()
 
+        val map = mutableMapOf<String, String>()
+
+        for (uid in friendIds) {
+            when (val res = repo.getUsernameById(uid)) {
+                is NetworkResult.Success -> map[uid] = res.data ?: uid
+                else -> map[uid] = uid // fallback
+            }
+        }
+
+        friendUsernames = map
+    }
     suspend fun refreshRelationships() {
         // sent
         when (val sent = repo.getSentFriendRequestsFromUser(currentUser.uid)) {
@@ -84,6 +103,8 @@ fun FriendsScreen(
             is NetworkResult.Error -> android.util.Log.e("FriendsScreen", "Error friends: ${fr.message}")
             else -> {}
         }
+        refreshFriendUsernames()
+
     }
 
     LaunchedEffect(searchQuery.value) {
@@ -218,7 +239,6 @@ fun FriendsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val scope = rememberCoroutineScope( )
                                 Text(
                                     text = when {
                                         isFriend -> "Friend"
@@ -243,6 +263,7 @@ fun FriendsScreen(
                                                 }
 
                                                 sentRequest != null -> {
+                                                    // NOTE: This only works as "cancel" if your backend deletes by (fromId,toId).
                                                     when (val res = repo.declineFriendRequest(
                                                         fromUserId = currentUser.uid,
                                                         toUserId = user.userId
@@ -311,7 +332,9 @@ fun FriendsScreen(
                 sentRequests.forEach { req ->
                     val toUsername = req["toUsername"] as? String ?: "Unknown"
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
@@ -331,21 +354,68 @@ fun FriendsScreen(
                 text = "Received requests",
                 style = MaterialTheme.typography.titleMedium
             )
+
             if (receivedRequests.isEmpty()) {
                 Text("None", style = MaterialTheme.typography.bodyMedium)
             } else {
                 receivedRequests.forEach { req ->
                     val fromUsername = req["fromUsername"] as? String ?: "Unknown"
+                    val fromId = req["fromId"] as? String ?: return@forEach
+
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
-                        Text(
-                            text = fromUsername,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = fromUsername,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            val requestId = "${fromId}_to_${currentUser.uid}"
+                                            when (val res = repo.acceptFriendRequest(requestId)) {
+                                                is NetworkResult.Success -> refreshRelationships()
+                                                is NetworkResult.Error ->
+                                                    android.util.Log.e("FriendsScreen", "acceptFriendRequest failed: ${res.message}")
+                                                else -> {}
+                                            }
+                                        }
+                                    }
+                                ) { Text("Accept") }
+
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            when (val res = repo.declineFriendRequest(
+                                                fromUserId = fromId,
+                                                toUserId = currentUser.uid
+                                            )) {
+                                                is NetworkResult.Success -> refreshRelationships()
+                                                is NetworkResult.Error ->
+                                                    android.util.Log.e("FriendsScreen", "declineFriendRequest failed: ${res.message}")
+                                                else -> {}
+                                            }
+                                        }
+                                    }
+                                ) { Text("Decline") }
+                            }
+                        }
                     }
                 }
             }
@@ -362,14 +432,18 @@ fun FriendsScreen(
             } else {
                 friends.forEach { fr ->
                     val ids = fr.ids as? List<*> ?: emptyList<Any>()
+
                     val otherId = ids.firstOrNull { it != currentUser.uid } as? String ?: "Unknown"
+                    val name = friendUsernames[otherId] ?: otherId
                     Surface(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Text(
-                            text = otherId,
+                            text = name,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             style = MaterialTheme.typography.bodyMedium
                         )
