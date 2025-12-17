@@ -13,6 +13,7 @@
     - [Layers](#layers)
     - [Effects](#effects)
     - [Saving](#saving)
+    - [Undo and redo](#undo-and-redo)
   - [Sharing](#sharing)
     - [Publishing](#publishing)
     - [Profile](#profile)
@@ -32,6 +33,8 @@
   3.  Daily Theme - Each day a new theme to work on.    
   4.  Community feed - See all sorts of drawings made by other artists.    
   5.  Friend feed - See what your friends have drawn.    
+
+![s2gif](https://github.com/user-attachments/assets/aeffc956-4491-4d47-bf8f-ebe13f45e081)
 
 ---
 ## Installation
@@ -120,7 +123,12 @@ Log out button, next to username.
  
     
     <img width="401" height="195" alt="image" src="https://github.com/user-attachments/assets/c76eb778-e0a1-41ba-a42a-d54eec116e0c" />
-   
+
+  - ### Undo and redo
+    <img width="180" height="77" alt="image" src="https://github.com/user-attachments/assets/89688ca2-ea88-418b-a4a5-252f26116596" />
+
+    Undo and redo buttons, after making a mistake, the user can press undo to revert back a change.
+
     
 - ### Sharing
   - ### Publishing
